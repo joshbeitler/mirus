@@ -1,6 +1,8 @@
 # mirus
 🎈 A small hobby operating system
 
+## Getting started
+
 ## License
 
 ```
