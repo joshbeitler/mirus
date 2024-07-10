@@ -11,8 +11,21 @@ Right now, `bake` is written in Rust with a variety of third-party dependencies,
 ## Features
 
 - Simple, easy-to-read JSON-based configuration files
-- Fast, parallel builds
-- Dependency tracking
+- Dependency aware build ordering
+- Concurrent build support
+
+## TODO
+
+- Multiple build targets + environment management
+- Better errors
+- Configuration file validation
+- Incremental builds + caching
+- Build step/recipe sandboxing
+- Versioning?
+- Recursive build file search
+- Better/prettier CLI output
+- Unit tests
+- Better examples (simple + real world complex)
 
 ## Building
 
