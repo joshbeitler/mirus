@@ -16,18 +16,18 @@ Right now, `bake` is written in Rust with a variety of third-party dependencies,
 
 ## TODO
 
-- Multiple build targets + environment management
-- Better errors
-- Configuration file validation
-- Incremental builds + caching
-- Build step/recipe sandboxing
-- Versioning?
-- Recursive build file search
-- Better/prettier CLI output
-- Unit tests
-- Recipe `list` command
-- Target `list` command
-- Better examples (simple + real world complex)
+- [ ] Multiple build targets + environment management
+- [ ] Better errors
+- [ ] Configuration file validation
+- [ ] Incremental builds + caching
+- [ ] Build step/recipe sandboxing
+- [ ] Versioning?
+- [ ] Recursive build file search
+- [ ] Better/prettier CLI output
+- [ ] Unit tests
+- [ ] Recipe `list` command
+- [ ] Target `list` command
+- [x]  Better examples (simple + real world complex)
 
 ## Building
 

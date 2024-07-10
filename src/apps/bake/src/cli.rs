@@ -41,6 +41,12 @@ pub enum Commands {
         #[arg(short, long)]
         verbose: bool,
     },
+    /// List available recipes
+    ListRecipes {
+        /// Build file to use
+        #[arg(short, long, default_value = "build.json")]
+        build_file: String,
+    },
 }
 
 /// Build the project using the specified build file and root directory.
@@ -92,6 +98,22 @@ pub async fn clean(root_dir: &str, verbose: bool) -> Result<(), BakeError> {
         }
     } else {
         println!("Nothing to clean");
+    }
+
+    Ok(())
+}
+
+pub async fn list_recipes(build_file: &str) -> Result<(), BakeError> {
+    let abs_root_dir = std::fs::canonicalize(".").map_err(|e| BakeError(e.to_string()))?;
+    let config = load_config(&abs_root_dir.join(build_file))?;
+
+    println!("{}", format!("{}{}",
+        "   Recipes".green().bold(),
+        format!(" bake v0.1.0 ({})", abs_root_dir.display())
+    ));
+
+    for recipe in config.recipes {
+        println!("{}", recipe.name);
     }
 
     Ok(())

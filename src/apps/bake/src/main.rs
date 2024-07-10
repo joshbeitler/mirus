@@ -21,5 +21,8 @@ async fn main() -> Result<(), error::BakeError> {
         Commands::Clean { root_dir, verbose } => {
             cli::clean(root_dir, *verbose).await
         }
+        Commands::ListRecipes { build_file } => {
+            cli::list_recipes(build_file).await
+        }
     }
 }
