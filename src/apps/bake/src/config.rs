@@ -19,6 +19,7 @@ pub struct Recipe {
     pub includes: Option<Vec<String>>,
     pub tools: HashMap<String, Tool>,
     pub dependencies: Option<Vec<String>>,
+    pub description: Option<String>,
 }
 
 #[derive(Debug, Deserialize, Serialize, Clone)]

@@ -103,6 +103,7 @@ pub async fn clean(root_dir: &str, verbose: bool) -> Result<(), BakeError> {
     Ok(())
 }
 
+/// List the recipes available in the specified build file.
 pub async fn list_recipes(build_file: &str) -> Result<(), BakeError> {
     let abs_root_dir = std::fs::canonicalize(".").map_err(|e| BakeError(e.to_string()))?;
     let config = load_config(&abs_root_dir.join(build_file))?;
@@ -113,7 +114,11 @@ pub async fn list_recipes(build_file: &str) -> Result<(), BakeError> {
     ));
 
     for recipe in config.recipes {
+      if let Some(description) = recipe.description {
+        println!("{}: {}", recipe.name, description);
+      } else {
         println!("{}", recipe.name);
+      }
     }
 
     Ok(())
