@@ -98,7 +98,7 @@ async fn run_tool_on_file(
     output_dir: &Path,
     verbose: bool,
 ) -> Result<(), BakeError> {
-    let args = format_arguments(&tool, &sources, output_dir)?;
+    let args = format_arguments(tool, sources, output_dir, verbose)?;
 
     if verbose {
         println!("\nCommand: {} {:?}", tool.cmd, args);
@@ -110,6 +110,7 @@ async fn run_tool_on_file(
         .output()
         .await
         .map_err(|e| BakeError(e.to_string()))?;
+
 
     if !output.status.success() {
         println!("{}", "failed".red());
@@ -127,8 +128,7 @@ async fn run_tool_on_file(
     Ok(())
 }
 
-
-fn format_arguments(tool: &Tool, sources: &[PathBuf], output_dir: &Path) -> Result<Vec<String>, BakeError> {
+fn format_arguments(tool: &Tool, sources: &[PathBuf], output_dir: &Path, verbose: bool) -> Result<Vec<String>, BakeError> {
     let mut replacements = HashMap::new();
     replacements.insert("sources", sources.iter().map(|p| p.to_string_lossy().into_owned()).collect::<Vec<_>>().join(" "));
     replacements.insert("output_dir", output_dir.to_string_lossy().into_owned());
@@ -137,39 +137,67 @@ fn format_arguments(tool: &Tool, sources: &[PathBuf], output_dir: &Path) -> Resu
         .ok_or(BakeError("Couldn't get output file stem".into()))?
         .to_string_lossy().into_owned());
 
-    fn replace_and_expand(arg: &str, replacements: &HashMap<&str, String>) -> Result<Vec<String>, BakeError> {
+    fn replace_and_expand(arg: &str, replacements: &HashMap<&str, String>, output_dir: &Path, verbose: bool) -> Result<Vec<String>, BakeError> {
         let mut result = arg.to_string();
         for (pattern, replacement) in replacements {
             result = result.replace(&format!("{{{}}}", pattern), replacement);
         }
 
+        if verbose {
+            println!("  Debug: Expanding argument: {}", result);
+        }
+
         // Check if the argument contains any glob characters
         if result.contains('*') || result.contains('?') || result.contains('[') {
-            let expanded: Vec<String> = glob(&result)
+            let path = PathBuf::from(&result);
+            let glob_pattern = if path.is_absolute() {
+                result.clone()
+            } else {
+                output_dir.join(path).to_string_lossy().into_owned()
+            };
+
+            if verbose {
+                println!("  Debug: Glob pattern: {}", glob_pattern);
+            }
+
+            let expanded: Vec<String> = glob(&glob_pattern)
                 .map_err(|e| BakeError(e.to_string()))?
                 .filter_map(Result::ok)
                 .map(|path| path.to_string_lossy().into_owned())
                 .collect();
 
+            if verbose {
+                println!("  Debug: Expanded glob: {:?}", expanded);
+            }
+
             if expanded.is_empty() {
                 // If glob doesn't match anything, return the original string
+                if verbose {
+                    println!("  Debug: Glob expansion returned no results, using original: {}", result);
+                }
                 Ok(vec![result])
             } else {
                 Ok(expanded)
             }
         } else {
+            if verbose {
+                println!("  Debug: No glob characters, using as-is: {}", result);
+            }
             Ok(vec![result])
         }
     }
 
     let mut formatted_args = Vec::new();
     for arg in &tool.args {
-        let replaced = replace_and_expand(arg, &replacements)?;
+        let replaced = replace_and_expand(arg, &replacements, output_dir, verbose)?;
         formatted_args.extend(replaced);
     }
 
     Ok(formatted_args)
 }
+
+
+
 
 fn expand_sources(sources: &[String], root_dir: &Path) -> Result<Vec<PathBuf>, BakeError> {
     let mut expanded_sources = Vec::new();

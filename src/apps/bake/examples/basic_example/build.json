@@ -21,29 +21,6 @@
           "args": ["{output_dir}/**/*.o", "-o", "{output_dir}/calculator_app"]
         }
       }
-    },
-    {
-      "name": "tests",
-      "sources": ["tests/*.c", "src/**/*.c"],
-      "tools": {
-        "compile": {
-          "cmd": "clang",
-          "args": [
-            "-c",
-            "{sources}",
-            "-I",
-            "./include",
-            "-o",
-            "{output_dir}/{output_file_stem}.o"
-          ],
-          "concurrent": true
-        },
-        "link": {
-          "cmd": "clang",
-          "args": ["{output_dir}/**/*.o", "-o", "{output_dir}/run_tests"]
-        }
-      },
-      "dependencies": ["main"]
     }
   ]
 }
