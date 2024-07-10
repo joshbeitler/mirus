@@ -47,9 +47,10 @@ pub async fn execute_build(
                         .map(|source| {
                             let tool = tool.clone();
                             let root_dir = project.root_dir.clone();
+                            let output_dir = output_dir.clone();
                             let source = source.clone();
                             task::spawn(async move {
-                                run_tool_on_file(&tool, &[source], &root_dir, verbose).await
+                                run_tool_on_file(&tool, &[source], &root_dir, &output_dir, verbose).await
                             })
                         })
                         .buffer_unordered(num_cpus::get())
@@ -60,7 +61,7 @@ pub async fn execute_build(
                         result.map_err(|e| BakeError(e.to_string()))??;
                     }
                 } else {
-                    run_tool_on_file(tool, &expanded_sources, &project.root_dir, verbose).await?;
+                    run_tool_on_file(tool, &expanded_sources, &project.root_dir, &output_dir, verbose).await?;
                 }
 
                 println!("{}", "done".green());
@@ -92,12 +93,14 @@ async fn run_tool_on_file(
     tool: &Tool,
     sources: &[PathBuf],
     root_dir: &Path,
+    output_dir: &Path,
     verbose: bool,
 ) -> Result<(), BakeError> {
     let mut args = Vec::new();
     for arg in &tool.args {
         match arg.as_str() {
             "{sources}" => args.extend(sources.iter().map(|p| p.to_string_lossy().into_owned())),
+            "{output_dir}" => args.push(output_dir.to_string_lossy().into_owned()),
             _ => args.push(arg.clone()),
         }
     }

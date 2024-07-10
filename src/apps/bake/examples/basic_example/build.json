@@ -6,7 +6,7 @@
       "tools": {
         "compile": {
           "cmd": "clang",
-          "args": ["-c", "{sources}", "-I", "./include"],
+          "args": ["-c", "{sources}", "-I", "./include", "-o", "{output_dir}"],
           "concurrent": true
         },
         "link": {
