@@ -18,6 +18,8 @@ provide a secure environment for running applications through the use of sandbox
 - **Modern** architecture and feature set. Mirusi s 64-bit native, uses UEFI to boot, and has a system architecture inspired by modern operating systems.
 - **Independent** of existing operating systems. Mirus is not based on any existing operating system, and is written from scratch. This extends to as much of the related tooling, userspace, drivers, and libraries as possible.
 
+For more information on the design goals of Mirus, see `docs/design-goals.md`.
+
 ## Components
 
 - `kernel` a 64-bit hybrid kernel written in C and Assembly.
@@ -26,7 +28,9 @@ provide a secure environment for running applications through the use of sandbox
 
 ## Building
 
-To build Mirus, you will have to build or install `bake` first.
+To build Mirus, you will need to install all needed dependencies. You can use the `scripts/install-deps-{platform}.sh` scripts to install dependencies on your platform. Running the install script will also boostrap `bake`, the build tool for Mirus.
+
+Once dependencies are installed, you can then use `bake` to build Mirus.
 
 For building a bootable disk image to play with, you will want to build the
 `iso` recipe. Passing the `--target` flag will build using the provided build
@@ -42,7 +46,7 @@ $ bake build iso --target x86_64-mirus-xl
 
 ### Building for development
 
-See the `BUILDING.md` file for more information on building Mirus for development. (TODO: not great for monorepo, where will this file go?)
+See the `docs/building.md` file for more information on building Mirus for development. (TODO: not great for monorepo, where will this file go?)
 
 ## License
 
