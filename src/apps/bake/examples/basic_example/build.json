@@ -1,0 +1,36 @@
+{
+  "targets": [
+    {
+      "name": "dep_a",
+      "sources": ["src/dep_a/*.c"],
+      "tools": {
+        "cc": {
+          "cmd": "clang",
+          "args": ["{sources}", "-c"]
+        }
+      },
+      "dependencies": ["dep_b"]
+    },
+    {
+      "name": "dep_b",
+      "sources": ["src/dep_b/*.c"],
+      "tools": {
+        "cc": {
+          "cmd": "clang",
+          "args": ["{sources}", "-c"]
+        }
+      },
+      "dependencies": ["dep_c"]
+    },
+    {
+      "name": "dep_c",
+      "sources": ["src/dep_c/*.c"],
+      "tools": {
+        "cc": {
+          "cmd": "clang",
+          "args": ["{sources}", "-c"]
+        }
+      }
+    }
+  ]
+}
