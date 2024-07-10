@@ -25,7 +25,7 @@ Right now, `bake` is written in Rust with a variety of third-party dependencies,
 - [ ] Recursive build file search
 - [ ] Better/prettier CLI output
 - [ ] Unit tests
-- [ ] Recipe `list` command
+- [x] Recipe `list` command
 - [ ] Target `list` command
 - [x]  Better examples (simple + real world complex)
 
