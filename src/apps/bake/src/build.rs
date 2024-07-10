@@ -12,6 +12,7 @@ pub fn execute_build(
     project: &ProjectConfig,
     order: &[String],
     dag: &Dag,
+    verbose: bool,
 ) -> Result<(), Box<dyn Error>> {
     for target_name in order {
         if let Some(target) = get_target(dag, target_name) {
@@ -56,6 +57,10 @@ pub fn execute_build(
                     }
                 }
 
+                if verbose {
+                    println!("\nCommand: {} {:?}", tool.cmd, args);
+                }
+
                 let output = Command::new(&tool.cmd)
                     .args(&args)
                     .current_dir(&output_dir)
@@ -63,12 +68,20 @@ pub fn execute_build(
 
                 if !output.status.success() {
                     println!("{}", "failed".red());
+                    if verbose {
+                        io::stderr().write_all(&output.stderr)?;
+                    }
                     return Err(
                         format!("Failed to run {} for target {}", tool_name, target_name).into(),
                     );
                 }
 
                 println!("{}", "done".green());
+
+                if verbose {
+                    io::stdout().write_all(&output.stdout)?;
+                    io::stderr().write_all(&output.stderr)?;
+                }
             }
 
             let duration = start_time.elapsed();
