@@ -1,11 +1,10 @@
-use crate::build::execute_build;
-use crate::config::{load_config, ProjectConfig};
-use crate::dag::{build_dag, topological_sort};
-use clap::{Parser, Subcommand};
-use colored::*;
-use std::error::Error;
-use std::fs;
 use std::time::Instant;
+use colored::*;
+use clap::{Parser, Subcommand};
+use crate::config::{ProjectConfig, load_config};
+use crate::dag::{build_dag, topological_sort};
+use crate::build::execute_build;
+use crate::error::BakeError;
 
 #[derive(Parser)]
 #[command(author, version, about, long_about = None)]
@@ -42,8 +41,8 @@ pub enum Commands {
     },
 }
 
-pub fn build(build_file: &str, root_dir: &str, verbose: bool) -> Result<(), Box<dyn Error>> {
-    let abs_root_dir = std::fs::canonicalize(root_dir)?;
+pub async fn build(build_file: &str, root_dir: &str, verbose: bool) -> Result<(), BakeError> {
+    let abs_root_dir = std::fs::canonicalize(root_dir).map_err(|e| BakeError(e.to_string()))?;
     let config = load_config(&abs_root_dir.join(build_file))?;
 
     let project = ProjectConfig {
@@ -54,14 +53,10 @@ pub fn build(build_file: &str, root_dir: &str, verbose: bool) -> Result<(), Box<
     let dag = build_dag(&project.build_config)?;
     let build_order = topological_sort(&dag)?;
 
-    println!(
-        "{}",
-        format!(
-            "{}{}",
-            "   Compiling".green().bold(),
-            format!(" bake v0.1.0 ({})", project.root_dir.display())
-        )
-    );
+    println!("{}", format!("{}{}",
+        "   Compiling".green().bold(),
+        format!(" bake v0.1.0 ({})", project.root_dir.display())
+    ));
 
     if verbose {
         println!("Build order: {:?}", build_order);
@@ -69,28 +64,24 @@ pub fn build(build_file: &str, root_dir: &str, verbose: bool) -> Result<(), Box<
 
     let start_time = Instant::now();
 
-    execute_build(&project, &build_order, &dag, verbose)?;
+    execute_build(&project, &build_order, &dag, verbose).await?;
 
     let total_duration = start_time.elapsed();
-    println!(
-        "{}",
-        format!(
-            "{} in {:.2}s",
-            "    Finished".green().bold(),
-            total_duration.as_secs_f32()
-        )
-    );
+    println!("{}", format!("{} in {:.2}s",
+        "    Finished".green().bold(),
+        total_duration.as_secs_f32()
+    ));
 
     Ok(())
 }
 
-pub fn clean(root_dir: &str, verbose: bool) -> Result<(), Box<dyn Error>> {
-    let abs_root_dir = std::fs::canonicalize(root_dir)?;
+pub async fn clean(root_dir: &str, verbose: bool) -> Result<(), BakeError> {
+    let abs_root_dir = std::fs::canonicalize(root_dir).map_err(|e| BakeError(e.to_string()))?;
     let build_dir = abs_root_dir.join("build");
 
     if build_dir.exists() {
         println!("{}", "   Cleaning".green().bold());
-        fs::remove_dir_all(&build_dir)?;
+        tokio::fs::remove_dir_all(&build_dir).await.map_err(|e| BakeError(e.to_string()))?;
         println!("{}", "    Finished".green().bold());
         if verbose {
             println!("Removed directory: {}", build_dir.display());

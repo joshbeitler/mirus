@@ -1,7 +1,8 @@
+use crate::error::BakeError;
 use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
-use std::error::Error;
 use std::fs::File;
+use std::io::Read;
 use std::path::{Path, PathBuf};
 
 #[derive(Debug, Deserialize, Serialize)]
@@ -22,6 +23,8 @@ pub struct Target {
 pub struct Tool {
     pub cmd: String,
     pub args: Vec<String>,
+    #[serde(default)]
+    pub concurrent: bool,
 }
 
 pub struct ProjectConfig {
@@ -29,8 +32,12 @@ pub struct ProjectConfig {
     pub root_dir: PathBuf,
 }
 
-pub fn load_config(filename: &Path) -> Result<BuildConfig, Box<dyn Error>> {
-    let file = File::open(filename)?;
-    let config: BuildConfig = serde_json::from_reader(file)?;
+pub fn load_config(path: &Path) -> Result<BuildConfig, BakeError> {
+    let mut file = File::open(path).map_err(|e| BakeError(e.to_string()))?;
+    let mut contents = String::new();
+    file.read_to_string(&mut contents)
+        .map_err(|e| BakeError(e.to_string()))?;
+    let config: BuildConfig =
+        serde_json::from_str(&contents).map_err(|e| BakeError(e.to_string()))?;
     Ok(config)
 }

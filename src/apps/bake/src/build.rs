@@ -1,94 +1,67 @@
-use crate::config::ProjectConfig;
-use crate::dag::{get_target, Dag};
-use colored::*;
-use glob::glob;
-use std::error::Error;
-use std::io::{self, Write};
 use std::path::{Path, PathBuf};
-use std::process::Command;
 use std::time::Instant;
+use std::io::{self, Write};
+use glob::glob;
+use colored::*;
+use futures::stream::{self, StreamExt};
+use tokio::task;
+use num_cpus;
+use crate::config::{ProjectConfig, Tool};
+use crate::dag::{Dag, get_target};
+use crate::error::BakeError;
 
-pub fn execute_build(
+pub async fn execute_build(
     project: &ProjectConfig,
     order: &[String],
     dag: &Dag,
     verbose: bool,
-) -> Result<(), Box<dyn Error>> {
+) -> Result<(), BakeError> {
     for target_name in order {
         if let Some(target) = get_target(dag, target_name) {
             let start_time = Instant::now();
 
             let output_dir = project.root_dir.join("build").join(target_name);
-            std::fs::create_dir_all(&output_dir)?;
+            tokio::fs::create_dir_all(&output_dir).await.map_err(|e| BakeError(e.to_string()))?;
 
             let expanded_sources = expand_sources(&target.sources, &project.root_dir)?;
 
             for (tool_name, tool) in &target.tools {
-                print!(
-                    "{}",
-                    format!(
-                        "     {} {} for {} ... ",
+                print!("{}",
+                    format!("     {} {} for {} ... ",
                         "Running".bold().green(),
                         tool_name.cyan(),
                         target_name.yellow()
                     )
                 );
-                io::stdout().flush()?;
+                io::stdout().flush().map_err(|e| BakeError(e.to_string()))?;
 
-                let mut args = Vec::new();
-                for arg in &tool.args {
-                    match arg.as_str() {
-                        "{sources}" => args.extend(
-                            expanded_sources
-                                .iter()
-                                .map(|p| p.to_string_lossy().into_owned()),
-                        ),
-                        "{includes}" => {
-                            if let Some(includes) = &target.includes {
-                                for inc in includes {
-                                    args.push(format!(
-                                        "-I{}",
-                                        project.root_dir.join(inc).display()
-                                    ));
-                                }
-                            }
-                        }
-                        _ => args.push(arg.clone()),
+                if tool.concurrent {
+                    let results = stream::iter(expanded_sources.iter())
+                        .map(|source| {
+                            let tool = tool.clone();
+                            let output_dir = output_dir.clone();
+                            let source = source.clone();
+                            task::spawn(async move {
+                                run_tool_on_file(&tool, &[source], &output_dir, verbose).await
+                            })
+                        })
+                        .buffer_unordered(num_cpus::get())
+                        .collect::<Vec<_>>()
+                        .await;
+
+                    for result in results {
+                        result.map_err(|e| BakeError(e.to_string()))??;
                     }
-                }
-
-                if verbose {
-                    println!("\nCommand: {} {:?}", tool.cmd, args);
-                }
-
-                let output = Command::new(&tool.cmd)
-                    .args(&args)
-                    .current_dir(&output_dir)
-                    .output()?;
-
-                if !output.status.success() {
-                    println!("{}", "failed".red());
-                    if verbose {
-                        io::stderr().write_all(&output.stderr)?;
-                    }
-                    return Err(
-                        format!("Failed to run {} for target {}", tool_name, target_name).into(),
-                    );
+                } else {
+                    run_tool_on_file(tool, &expanded_sources, &output_dir, verbose).await?;
                 }
 
                 println!("{}", "done".green());
-
-                if verbose {
-                    io::stdout().write_all(&output.stdout)?;
-                    io::stderr().write_all(&output.stderr)?;
-                }
             }
 
             let duration = start_time.elapsed();
-            println!(
-                "{}",
-                format!(
-                    "   {} {} in {:.2}s",
+            println!("{}",
+                format!("   {} {} in {:.2}s",
                     "Compiled".green().bold(),
                     target_name.yellow(),
                     duration.as_secs_f32()
@@ -100,13 +73,54 @@ pub fn execute_build(
     Ok(())
 }
 
-fn expand_sources(sources: &[String], root_dir: &Path) -> Result<Vec<PathBuf>, Box<dyn Error>> {
+async fn run_tool_on_file(
+    tool: &Tool,
+    sources: &[PathBuf],
+    output_dir: &Path,
+    verbose: bool,
+) -> Result<(), BakeError> {
+    let mut args = Vec::new();
+    for arg in &tool.args {
+        match arg.as_str() {
+            "{sources}" => args.extend(sources.iter().map(|p| p.to_string_lossy().into_owned())),
+            _ => args.push(arg.clone()),
+        }
+    }
+
+    if verbose {
+        println!("\nCommand: {} {:?}", tool.cmd, args);
+    }
+
+    let output = tokio::process::Command::new(&tool.cmd)
+        .args(&args)
+        .current_dir(output_dir)
+        .output()
+        .await
+        .map_err(|e| BakeError(e.to_string()))?;
+
+    if !output.status.success() {
+        println!("{}", "failed".red());
+        if verbose {
+            io::stderr().write_all(&output.stderr).map_err(|e| BakeError(e.to_string()))?;
+        }
+        return Err(BakeError(format!("Failed to run {} for files {:?}", tool.cmd, sources)));
+    }
+
+    if verbose {
+        io::stdout().write_all(&output.stdout).map_err(|e| BakeError(e.to_string()))?;
+        io::stderr().write_all(&output.stderr).map_err(|e| BakeError(e.to_string()))?;
+    }
+
+    Ok(())
+}
+
+fn expand_sources(sources: &[String], root_dir: &Path) -> Result<Vec<PathBuf>, BakeError> {
     let mut expanded_sources = Vec::new();
 
     for source in sources {
         let full_pattern = root_dir.join(source);
         let matches: Vec<PathBuf> = glob(&full_pattern.to_string_lossy())
-            .expect("Failed to read glob pattern")
+            .map_err(|e| BakeError(e.to_string()))?
             .filter_map(Result::ok)
             .collect();
 

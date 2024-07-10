@@ -6,7 +6,8 @@
       "tools": {
         "cc": {
           "cmd": "clang",
-          "args": ["{sources}", "-c"]
+          "args": ["{sources}", "-c"],
+          "concurrent": true
         }
       },
       "dependencies": ["dep_b"]
