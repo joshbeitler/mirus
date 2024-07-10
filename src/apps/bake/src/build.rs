@@ -98,21 +98,7 @@ async fn run_tool_on_file(
     output_dir: &Path,
     verbose: bool,
 ) -> Result<(), BakeError> {
-  let args = format_arguments(&tool, &sources, output_dir)?;
-    // let mut args = Vec::new();
-    // for arg in &tool.args {
-    //     match arg.as_str() {
-    //         "{sources}" => args.extend(sources.iter().map(|p| p.to_string_lossy().into_owned())),
-    //         "{output_dir}" => args.push(output_dir.to_string_lossy().into_owned()),
-    //         "{output_file_stem}" => {
-    //             let output_file_stem = sources[0]
-    //                 .file_stem()
-    //                 .ok_or_else(|| BakeError("Failed to get file stem".to_string()))?;
-    //             args.push(output_file_stem.to_string_lossy().into_owned());
-    //         }
-    //         _ => args.push(arg.clone()),
-    //     }
-    // }
+    let args = format_arguments(&tool, &sources, output_dir)?;
 
     if verbose {
         println!("\nCommand: {} {:?}", tool.cmd, args);

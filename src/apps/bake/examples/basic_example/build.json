@@ -18,7 +18,7 @@
         },
         "link": {
           "cmd": "clang",
-          "args": ["src/**/*.o", "-o", "main"]
+          "args": ["{output_dir}/**/*.o", "-o", "{output_dir}/calculator_app"]
         }
       }
     },
