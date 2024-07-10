@@ -127,8 +127,8 @@ async fn run_tool_on_file(
     Ok(())
 }
 
+
 fn format_arguments(tool: &Tool, sources: &[PathBuf], output_dir: &Path) -> Result<Vec<String>, BakeError> {
-    // Create a map of pattern replacements
     let mut replacements = HashMap::new();
     replacements.insert("sources", sources.iter().map(|p| p.to_string_lossy().into_owned()).collect::<Vec<_>>().join(" "));
     replacements.insert("output_dir", output_dir.to_string_lossy().into_owned());
@@ -137,24 +137,35 @@ fn format_arguments(tool: &Tool, sources: &[PathBuf], output_dir: &Path) -> Resu
         .ok_or(BakeError("Couldn't get output file stem".into()))?
         .to_string_lossy().into_owned());
 
-    // Function to replace patterns in a single argument
-    fn replace_patterns(arg: &str, replacements: &HashMap<&str, String>) -> String {
+    fn replace_and_expand(arg: &str, replacements: &HashMap<&str, String>) -> Result<Vec<String>, BakeError> {
         let mut result = arg.to_string();
         for (pattern, replacement) in replacements {
             result = result.replace(&format!("{{{}}}", pattern), replacement);
         }
-        result
+
+        // Check if the argument contains any glob characters
+        if result.contains('*') || result.contains('?') || result.contains('[') {
+            let expanded: Vec<String> = glob(&result)
+                .map_err(|e| BakeError(e.to_string()))?
+                .filter_map(Result::ok)
+                .map(|path| path.to_string_lossy().into_owned())
+                .collect();
+
+            if expanded.is_empty() {
+                // If glob doesn't match anything, return the original string
+                Ok(vec![result])
+            } else {
+                Ok(expanded)
+            }
+        } else {
+            Ok(vec![result])
+        }
     }
 
-    // Process all arguments
     let mut formatted_args = Vec::new();
     for arg in &tool.args {
-        let replaced = replace_patterns(arg, &replacements);
-        if replaced == *arg {
-            formatted_args.push(arg.clone());
-        } else {
-            formatted_args.extend(replaced.split_whitespace().map(String::from));
-        }
+        let replaced = replace_and_expand(arg, &replacements)?;
+        formatted_args.extend(replaced);
     }
 
     Ok(formatted_args)

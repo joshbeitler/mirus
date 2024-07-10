@@ -28,12 +28,19 @@
       "tools": {
         "compile": {
           "cmd": "clang",
-          "args": ["-c", "{sources}", "-I", "./include"],
+          "args": [
+            "-c",
+            "{sources}",
+            "-I",
+            "./include",
+            "-o",
+            "{output_dir}/{output_file_stem}.o"
+          ],
           "concurrent": true
         },
         "link": {
           "cmd": "clang",
-          "args": ["tests/*.o", "src/**/*.o", "-o", "run_tests"]
+          "args": ["{output_dir}/**/*.o", "-o", "{output_dir}/run_tests"]
         }
       },
       "dependencies": ["main"]
