@@ -46,10 +46,10 @@ pub async fn execute_build(
                     let results = stream::iter(expanded_sources.iter())
                         .map(|source| {
                             let tool = tool.clone();
-                            let output_dir = output_dir.clone();
+                            let root_dir = project.root_dir.clone();
                             let source = source.clone();
                             task::spawn(async move {
-                                run_tool_on_file(&tool, &[source], &output_dir, verbose).await
+                                run_tool_on_file(&tool, &[source], &root_dir, verbose).await
                             })
                         })
                         .buffer_unordered(num_cpus::get())
@@ -60,7 +60,7 @@ pub async fn execute_build(
                         result.map_err(|e| BakeError(e.to_string()))??;
                     }
                 } else {
-                    run_tool_on_file(tool, &expanded_sources, &output_dir, verbose).await?;
+                    run_tool_on_file(tool, &expanded_sources, &project.root_dir, verbose).await?;
                 }
 
                 println!("{}", "done".green());
@@ -91,7 +91,7 @@ pub async fn execute_build(
 async fn run_tool_on_file(
     tool: &Tool,
     sources: &[PathBuf],
-    output_dir: &Path,
+    root_dir: &Path,
     verbose: bool,
 ) -> Result<(), BakeError> {
     let mut args = Vec::new();
@@ -108,7 +108,7 @@ async fn run_tool_on_file(
 
     let output = tokio::process::Command::new(&tool.cmd)
         .args(&args)
-        .current_dir(output_dir)
+        .current_dir(root_dir)
         .output()
         .await
         .map_err(|e| BakeError(e.to_string()))?;

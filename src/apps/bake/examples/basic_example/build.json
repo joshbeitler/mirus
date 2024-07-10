@@ -1,37 +1,35 @@
 {
   "recipes": [
     {
-      "name": "dep_a",
-      "sources": ["src/dep_a/*.c"],
+      "name": "main",
+      "sources": ["src/**/*.c"],
       "tools": {
-        "cc": {
+        "compile": {
           "cmd": "clang",
-          "args": ["{sources}", "-c"],
+          "args": ["-c", "{sources}", "-I", "./include"],
           "concurrent": true
-        }
-      },
-      "dependencies": ["dep_b"]
-    },
-    {
-      "name": "dep_b",
-      "sources": ["src/dep_b/*.c"],
-      "tools": {
-        "cc": {
+        },
+        "link": {
           "cmd": "clang",
-          "args": ["{sources}", "-c"]
-        }
-      },
-      "dependencies": ["dep_c"]
-    },
-    {
-      "name": "dep_c",
-      "sources": ["src/dep_c/*.c"],
-      "tools": {
-        "cc": {
-          "cmd": "clang",
-          "args": ["{sources}", "-c"]
+          "args": ["src/**/*.o", "-o", "main"]
         }
       }
+    },
+    {
+      "name": "tests",
+      "sources": ["tests/*.c", "src/**/*.c"],
+      "tools": {
+        "compile": {
+          "cmd": "clang",
+          "args": ["-c", "{sources}", "-I", "./include"],
+          "concurrent": true
+        },
+        "link": {
+          "cmd": "clang",
+          "args": ["tests/*.o", "src/**/*.o", "-o", "run_tests"]
+        }
+      },
+      "dependencies": ["main"]
     }
   ]
 }
