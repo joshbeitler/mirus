@@ -1,6 +1,7 @@
 use std::path::{Path, PathBuf};
 use std::time::Instant;
 use std::io::{self, Write};
+use std::collections::{BTreeMap, HashMap};
 
 use glob::glob;
 use colored::*;
@@ -31,8 +32,9 @@ pub async fn execute_build(
             tokio::fs::create_dir_all(&output_dir).await.map_err(|e| BakeError(e.to_string()))?;
 
             let expanded_sources = expand_sources(&recipe.sources, &project.root_dir)?;
+            let ordered_tools: BTreeMap<_, _> = recipe.tools.iter().collect();
 
-            for (tool_name, tool) in &recipe.tools {
+            for (tool_name, tool) in ordered_tools {
                 print!("{}",
                     format!("     {} {} for {} ... ",
                         "Running".bold().green(),
@@ -96,14 +98,21 @@ async fn run_tool_on_file(
     output_dir: &Path,
     verbose: bool,
 ) -> Result<(), BakeError> {
-    let mut args = Vec::new();
-    for arg in &tool.args {
-        match arg.as_str() {
-            "{sources}" => args.extend(sources.iter().map(|p| p.to_string_lossy().into_owned())),
-            "{output_dir}" => args.push(output_dir.to_string_lossy().into_owned()),
-            _ => args.push(arg.clone()),
-        }
-    }
+  let args = format_arguments(&tool, &sources, output_dir)?;
+    // let mut args = Vec::new();
+    // for arg in &tool.args {
+    //     match arg.as_str() {
+    //         "{sources}" => args.extend(sources.iter().map(|p| p.to_string_lossy().into_owned())),
+    //         "{output_dir}" => args.push(output_dir.to_string_lossy().into_owned()),
+    //         "{output_file_stem}" => {
+    //             let output_file_stem = sources[0]
+    //                 .file_stem()
+    //                 .ok_or_else(|| BakeError("Failed to get file stem".to_string()))?;
+    //             args.push(output_file_stem.to_string_lossy().into_owned());
+    //         }
+    //         _ => args.push(arg.clone()),
+    //     }
+    // }
 
     if verbose {
         println!("\nCommand: {} {:?}", tool.cmd, args);
@@ -130,6 +139,39 @@ async fn run_tool_on_file(
     }
 
     Ok(())
+}
+
+fn format_arguments(tool: &Tool, sources: &[PathBuf], output_dir: &Path) -> Result<Vec<String>, BakeError> {
+    // Create a map of pattern replacements
+    let mut replacements = HashMap::new();
+    replacements.insert("sources", sources.iter().map(|p| p.to_string_lossy().into_owned()).collect::<Vec<_>>().join(" "));
+    replacements.insert("output_dir", output_dir.to_string_lossy().into_owned());
+    replacements.insert("output_file_stem", sources.first()
+        .and_then(|p| p.file_stem())
+        .ok_or(BakeError("Couldn't get output file stem".into()))?
+        .to_string_lossy().into_owned());
+
+    // Function to replace patterns in a single argument
+    fn replace_patterns(arg: &str, replacements: &HashMap<&str, String>) -> String {
+        let mut result = arg.to_string();
+        for (pattern, replacement) in replacements {
+            result = result.replace(&format!("{{{}}}", pattern), replacement);
+        }
+        result
+    }
+
+    // Process all arguments
+    let mut formatted_args = Vec::new();
+    for arg in &tool.args {
+        let replaced = replace_patterns(arg, &replacements);
+        if replaced == *arg {
+            formatted_args.push(arg.clone());
+        } else {
+            formatted_args.extend(replaced.split_whitespace().map(String::from));
+        }
+    }
+
+    Ok(formatted_args)
 }
 
 fn expand_sources(sources: &[String], root_dir: &Path) -> Result<Vec<PathBuf>, BakeError> {

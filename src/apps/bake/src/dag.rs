@@ -1,8 +1,7 @@
 use std::collections::HashMap;
 
 use petgraph::algo::toposort;
-use petgraph::graph::{DiGraph, EdgeIndex};
-use petgraph::visit::EdgeRef;
+use petgraph::graph::DiGraph;
 
 use crate::config::{BuildConfig, Recipe};
 use crate::error::BakeError;

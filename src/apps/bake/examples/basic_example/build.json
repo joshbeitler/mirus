@@ -6,7 +6,14 @@
       "tools": {
         "compile": {
           "cmd": "clang",
-          "args": ["-c", "{sources}", "-I", "./include", "-o", "{output_dir}"],
+          "args": [
+            "-c",
+            "{sources}",
+            "-I",
+            "./include",
+            "-o",
+            "{output_dir}/{output_file_stem}.o"
+          ],
           "concurrent": true
         },
         "link": {
