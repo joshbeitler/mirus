@@ -10,20 +10,20 @@ pub type Dag = DiGraph<Recipe, ()>;
 
 /// Builds a directed acyclic graph (DAG) from a build configuration.
 ///
-/// The DAG allows us to determine the order in which recipies should be built
+/// The DAG allows us to determine the order in which recipes should be built
 /// to power the automatic dependency resolution in the build system.
 pub fn build_dag(config: &BuildConfig) -> Result<Dag, BakeError> {
     let mut dag = DiGraph::new();
     let mut node_indices = HashMap::new();
 
-    // First pass: add all recipies as nodes
-    for recipe in &config.recipies {
+    // First pass: add all recipes as nodes
+    for recipe in &config.recipes {
         let node_index = dag.add_node(recipe.clone());
         node_indices.insert(recipe.name.clone(), node_index);
     }
 
     // Second pass: add edges for dependencies
-    for recipe in &config.recipies {
+    for recipe in &config.recipes {
         if let Some(deps) = &recipe.dependencies {
             let recipe_index = node_indices[&recipe.name];
             for dep in deps {
@@ -47,7 +47,7 @@ pub fn build_dag(config: &BuildConfig) -> Result<Dag, BakeError> {
     Ok(dag)
 }
 
-/// Topologically sorts the DAG to determine the order in which recipies should
+/// Topologically sorts the DAG to determine the order in which recipes should
 /// be built.
 ///
 /// This function returns a list of recipe names in the order they should be

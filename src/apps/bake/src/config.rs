@@ -9,7 +9,7 @@ use crate::error::BakeError;
 
 #[derive(Debug, Deserialize, Serialize)]
 pub struct BuildConfig {
-    pub recipies: Vec<Recipe>,
+    pub recipes: Vec<Recipe>,
 }
 
 #[derive(Debug, Deserialize, Serialize, Clone)]
