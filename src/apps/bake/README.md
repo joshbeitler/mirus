@@ -34,7 +34,7 @@ Here is an example `build.json` file:
 
 ```json
 {
-  "targets": [
+  "recipes": [
     {
       "name": "dep_a",
       "sources": ["src/dep_a/*.c"],

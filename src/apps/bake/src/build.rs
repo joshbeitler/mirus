@@ -1,36 +1,43 @@
 use std::path::{Path, PathBuf};
 use std::time::Instant;
 use std::io::{self, Write};
+
 use glob::glob;
 use colored::*;
 use futures::stream::{self, StreamExt};
 use tokio::task;
 use num_cpus;
+
 use crate::config::{ProjectConfig, Tool};
-use crate::dag::{Dag, get_target};
+use crate::dag::{Dag, get_recipe};
 use crate::error::BakeError;
 
+/// Executes the build process for the given project.
+///
+/// The build process will run each tool for each source file in the recipe's
+/// sources list, and will output the results to the build directory. Optional
+/// concurrency can be enabled for tools that support it.
 pub async fn execute_build(
     project: &ProjectConfig,
     order: &[String],
     dag: &Dag,
     verbose: bool,
 ) -> Result<(), BakeError> {
-    for target_name in order {
-        if let Some(target) = get_target(dag, target_name) {
+    for recipe_name in order {
+        if let Some(recipe) = get_recipe(dag, recipe_name) {
             let start_time = Instant::now();
 
-            let output_dir = project.root_dir.join("build").join(target_name);
+            let output_dir = project.root_dir.join("build").join(recipe_name);
             tokio::fs::create_dir_all(&output_dir).await.map_err(|e| BakeError(e.to_string()))?;
 
-            let expanded_sources = expand_sources(&target.sources, &project.root_dir)?;
+            let expanded_sources = expand_sources(&recipe.sources, &project.root_dir)?;
 
-            for (tool_name, tool) in &target.tools {
+            for (tool_name, tool) in &recipe.tools {
                 print!("{}",
                     format!("     {} {} for {} ... ",
                         "Running".bold().green(),
                         tool_name.cyan(),
-                        target_name.yellow()
+                        recipe_name.yellow()
                     )
                 );
                 io::stdout().flush().map_err(|e| BakeError(e.to_string()))?;
@@ -63,7 +70,7 @@ pub async fn execute_build(
             println!("{}",
                 format!("   {} {} in {:.2}s",
                     "Compiled".green().bold(),
-                    target_name.yellow(),
+                    recipe_name.yellow(),
                     duration.as_secs_f32()
                 )
             );
@@ -73,6 +80,14 @@ pub async fn execute_build(
     Ok(())
 }
 
+/// Runs the given tool on the provided source files.
+///
+/// The tool will be run with the provided arguments, and the output will be
+/// written to the output directory. If the tool fails to run, an error will be
+/// returned.
+///
+/// Able to run multiple instances of a tool concurrently if the tool is
+/// marked as such in the receipe.
 async fn run_tool_on_file(
     tool: &Tool,
     sources: &[PathBuf],

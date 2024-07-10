@@ -1,6 +1,8 @@
 use std::time::Instant;
+
 use colored::*;
 use clap::{Parser, Subcommand};
+
 use crate::config::{ProjectConfig, load_config};
 use crate::dag::{build_dag, topological_sort};
 use crate::build::execute_build;
@@ -41,6 +43,7 @@ pub enum Commands {
     },
 }
 
+/// Build the project using the specified build file and root directory.
 pub async fn build(build_file: &str, root_dir: &str, verbose: bool) -> Result<(), BakeError> {
     let abs_root_dir = std::fs::canonicalize(root_dir).map_err(|e| BakeError(e.to_string()))?;
     let config = load_config(&abs_root_dir.join(build_file))?;
@@ -75,6 +78,7 @@ pub async fn build(build_file: &str, root_dir: &str, verbose: bool) -> Result<()
     Ok(())
 }
 
+/// Clean the build artifacts in the specified root directory.
 pub async fn clean(root_dir: &str, verbose: bool) -> Result<(), BakeError> {
     let abs_root_dir = std::fs::canonicalize(root_dir).map_err(|e| BakeError(e.to_string()))?;
     let build_dir = abs_root_dir.join("build");

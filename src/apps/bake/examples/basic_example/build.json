@@ -1,5 +1,5 @@
 {
-  "targets": [
+  "recipes": [
     {
       "name": "dep_a",
       "sources": ["src/dep_a/*.c"],

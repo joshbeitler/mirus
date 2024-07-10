@@ -7,6 +7,9 @@ mod error;
 use clap::Parser;
 use cli::{Cli, Commands};
 
+/// Main entry point for the bake tool.
+///
+/// Initializes the CLI parser and runs the appropriate command with args.
 #[tokio::main]
 async fn main() -> Result<(), error::BakeError> {
     let cli = Cli::parse();
