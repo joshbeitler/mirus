@@ -9,7 +9,7 @@
           "cmd": "curl",
           "args": [
             "-Lo",
-            "src/kernel/core/limine.h",
+            "src/kernel/include/limine.h",
             "https://github.com/limine-bootloader/limine/raw/trunk/limine.h"
           ]
         }
@@ -40,6 +40,8 @@
             "-mno-sse",
             "-mno-sse2",
             "-mno-red-zone",
+            "-I",
+            "src/kernel/include",
             "-c",
             "{sources}",
             "-o",
