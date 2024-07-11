@@ -1,0 +1,55 @@
+{
+  "recipes": [
+    {
+      "name": "kernel",
+      "description": "Build the kernel",
+      "sources": ["src/kernel/**/*.c"],
+      "tools": {
+        "compile": {
+          "cmd": "clang",
+          "args": [
+            "-target",
+            "x86_64-unknown-elf",
+            "-Wall",
+            "-Wextra",
+            "-std=gnu11",
+            "-ffreestanding",
+            "-fno-stack-protector",
+            "-fno-stack-check",
+            "-fno-lto",
+            "-fPIE",
+            "-m64",
+            "-mno-80387",
+            "-mno-mmx",
+            "-mno-sse",
+            "-mno-sse2",
+            "-mno-red-zone",
+            "-c",
+            "{sources}",
+            "-o",
+            "{output_dir}/{output_file_stem}.o"
+          ],
+          "concurrent": true
+        },
+        "link": {
+          "cmd": "ld.lld",
+          "args": [
+            "-m",
+            "elf_x86_64",
+            "-nostdlib",
+            "-pie",
+            "-z",
+            "text",
+            "-z",
+            "max-page-size=0x1000",
+            "-T",
+            "meta/linker.ld",
+            "{output_dir}/*.o",
+            "-o",
+            "{output_dir}/kernel"
+          ]
+        }
+      }
+    }
+  ]
+}
