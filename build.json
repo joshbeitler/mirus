@@ -1,9 +1,25 @@
 {
   "recipes": [
     {
+      "name": "limine-headers",
+      "description": "Fetch latest Limine header from GitHub",
+      "sources": [],
+      "tools": {
+        "fetch": {
+          "cmd": "curl",
+          "args": [
+            "-Lo",
+            "src/kernel/core/limine.h",
+            "https://github.com/limine-bootloader/limine/raw/trunk/limine.h"
+          ]
+        }
+      }
+    },
+    {
       "name": "kernel",
       "description": "Build the kernel",
       "sources": ["src/kernel/**/*.c"],
+      "dependencies": ["limine-headers"],
       "tools": {
         "compile": {
           "cmd": "clang",

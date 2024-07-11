@@ -133,9 +133,9 @@ fn format_arguments(tool: &Tool, sources: &[PathBuf], output_dir: &Path, verbose
     replacements.insert("sources", sources.iter().map(|p| p.to_string_lossy().into_owned()).collect::<Vec<_>>().join(" "));
     replacements.insert("output_dir", output_dir.to_string_lossy().into_owned());
     replacements.insert("output_file_stem", sources.first()
-        .and_then(|p| p.file_stem())
-        .ok_or(BakeError("Couldn't get output file stem".into()))?
-        .to_string_lossy().into_owned());
+      .and_then(|p| p.file_stem())
+      .map(|stem| stem.to_string_lossy().into_owned())
+      .unwrap_or_else(|| "default".to_string()));
 
     fn replace_and_expand(arg: &str, replacements: &HashMap<&str, String>, output_dir: &Path, verbose: bool) -> Result<Vec<String>, BakeError> {
         let mut result = arg.to_string();
