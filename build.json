@@ -1,7 +1,7 @@
 {
   "recipes": [
     {
-      "name": "limine-headers",
+      "name": "limine-header",
       "description": "Fetch latest Limine header from GitHub",
       "sources": [],
       "tools": {
@@ -16,10 +16,25 @@
       }
     },
     {
+      "name": "ssf-header",
+      "description": "Fetch latest Simple Screen Font 2.0 header from GitLab",
+      "sources": [],
+      "tools": {
+        "fetch": {
+          "cmd": "curl",
+          "args": [
+            "-Lo",
+            "src/kernel/include/ssfn.h",
+            "https://gitlab.com/bztsrc/scalable-font2/-/raw/master/ssfn.h?ref_type=heads"
+          ]
+        }
+      }
+    },
+    {
       "name": "kernel",
       "description": "Build the kernel",
       "sources": ["src/kernel/**/*.c"],
-      "dependencies": ["limine-headers"],
+      "dependencies": ["limine-header", "ssf-header"],
       "tools": {
         "compile": {
           "cmd": "clang",

@@ -110,5 +110,6 @@ iso_root/
 limine/
 *.iso
 limine.h
+ssfn.h
 
 # End of https://www.toptal.com/developers/gitignore/api/rust

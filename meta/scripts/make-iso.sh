@@ -9,6 +9,7 @@ mkdir -p iso_root
 
 # Copy the relevant files over.
 mkdir -p iso_root/boot
+cp -v meta/*.sfn iso_root
 cp -v build/kernel/kernel iso_root/boot/
 mkdir -p iso_root/boot/limine
 cp -v meta/limine.cfg limine/limine-bios.sys limine/limine-bios-cd.bin \
