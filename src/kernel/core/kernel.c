@@ -48,12 +48,6 @@ void _start(void) {
   // Fetch the first framebuffer.
   struct limine_framebuffer *framebuffer = framebuffer_request.response->framebuffers[0];
 
-  // Note: we assume the framebuffer model is RGB with 32-bit pixels.
-  // for (size_t i = 0; i < 100; i++) {
-  //   volatile uint32_t *fb_ptr = framebuffer->address;
-  //   fb_ptr[i * (framebuffer->pitch / 4) + i] = 0xffffff;
-  // }
-
   // load font
   struct limine_file *default_terminal_font = getFile("u_vga16.sfn");
 
