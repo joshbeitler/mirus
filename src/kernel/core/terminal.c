@@ -1,10 +1,11 @@
 #include <stdint.h>
 #include <stddef.h>
+
 #include <ssfn.h>
 #include <limine.h>
 
-#include <terminal.h>
-#include <string.h>
+#include <kernel/terminal.h>
+#include <kernel/string.h>
 
 void terminal_clear() {
   for (int i = 0; i < terminal.buffer_size; i++) {

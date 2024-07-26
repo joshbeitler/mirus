@@ -7,10 +7,10 @@
 #include <limine.h>
 #include <ssfn.h>
 
-#include <bootloader.h>
-#include <string.h>
-#include <terminal.h>
-#include <serial.h>
+#include <kernel/bootloader.h>
+#include <kernel/string.h>
+#include <kernel/terminal.h>
+#include <kernel/serial.h>
 
 struct limine_file *getFile(const char *name) {
   struct limine_module_response *module_response = module_request.response;
