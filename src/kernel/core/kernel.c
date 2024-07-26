@@ -33,6 +33,9 @@ static void hcf(void) {
   }
 }
 
+/**
+ * Kernel entry point
+ */
 void _start(void) {
   // Ensure the bootloader actually understands our base revision (see spec).
   if (LIMINE_BASE_REVISION_SUPPORTED == false) {
