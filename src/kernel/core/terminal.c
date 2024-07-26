@@ -48,19 +48,35 @@ void terminal_initialize(
 }
 
 void terminal_write_char(uint32_t c) {
-  int index = terminal.cursor_y * terminal.width + terminal.cursor_x;
-  terminal.buffer[index].character = c;
-  terminal.cursor_x++;
-
-  // Wrap if too wide
-  if (terminal.cursor_x >= terminal.width) {
+  if (c == '\n') {
+    // Handle newlines
     terminal.cursor_x = 0;
     terminal.cursor_y++;
-    // TODO: implement scroll here
-  }
+    // todo: scroll
+  } else if (c == '\b') {
+    // Handle backspace
+    if (terminal.cursor_x > 0) {
+      terminal.cursor_x--;
+    } else if (terminal.cursor_y > 0) {
+      terminal.cursor_y--;
+      terminal.cursor_x = terminal.width - 1;
+    }
 
-  // TODO: this goes in the render function
-  // ssfn_putc(c);
+    int index = terminal.cursor_y * terminal.width + terminal.cursor_x;
+    terminal.buffer[index].character = ' ';
+  } else {
+    // Otherwise, write character to buffer normally
+    int index = terminal.cursor_y * terminal.width + terminal.cursor_x;
+    terminal.buffer[index].character = c;
+    terminal.cursor_x++;
+
+    // Wrap if too wide
+    if (terminal.cursor_x >= terminal.width) {
+      terminal.cursor_x = 0;
+      terminal.cursor_y++;
+      // TODO: implement scroll here
+    }
+  }
 }
 
 void terminal_write_string(const char* str) {

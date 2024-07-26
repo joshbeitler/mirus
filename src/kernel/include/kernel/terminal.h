@@ -84,4 +84,8 @@ void terminal_set_color(TerminalColor fg);
 void terminal_clear();
 
 void terminal_scroll();
+
+/**
+ * Renders the virtual terminal buffer to the framebuffer.
+ */
 void terminal_render();
