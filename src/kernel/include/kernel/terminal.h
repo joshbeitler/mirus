@@ -82,3 +82,6 @@ void terminal_set_color(TerminalColor fg);
  * Clears the terminal by directly clearing the framebuffer.
  */
 void terminal_clear();
+
+void terminal_scroll();
+void terminal_render();
