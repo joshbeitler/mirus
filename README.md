@@ -24,24 +24,29 @@ For more information on the design goals of Mirus, see `docs/design-goals.md`.
 
 - `kernel` a 64-bit hybrid kernel written in C and Assembly.
 - `hal` - the hardware abstraction layer for Mirus providing a common interface for hardware devices.
-- `bake` - ("Build Automation Kit for Everything") is a simple build tool inspired by Bazel. It is designed to be simple, fast, and easy to configure. `bake` is the build tool for the Mirus operating system project.
+- `libs` - a collection of libraries for use in Mirus kernel and userspace.
 
 ## Building
 
-To build Mirus, you will need to install all needed dependencies. You can use the `scripts/install-deps-{platform}.sh` scripts to install dependencies on your platform. Running the install script will also boostrap `bake`, the build tool for Mirus.
+To build Mirus, you will need to install all needed dependencies. You can use the `scripts/install-deps.sh` scripts to install dependencies on your platform.
 
-Once dependencies are installed, you can then use `bake` to build Mirus.
-
-For building a bootable disk image to play with, you will want to build the
-`iso` recipe. Passing the `--target` flag will build using the provided build
-configuration.
+Once the dependencies are installed, you can use `xmake` to build the kernel.
 
 ### Bootable disk image
 
-For the most complete build to play around with, use `x86_64-mirus-xl`.
+For building a bootable disk image to play with, you will want to build the
+`make-iso` recipe.
 
 ```sh
-$ bake build iso --target x86_64-mirus-xl
+$ xmake make-iso
+```
+
+### Run in QEMU
+
+You can use QEMU to run the disk image in a virtual machine with UEFI firmware.
+
+```sh
+$ xmake run-qemu-uefi
 ```
 
 ### Building for development
