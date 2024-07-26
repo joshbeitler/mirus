@@ -41,7 +41,6 @@ void _start(void) {
   serial_initialize();
   serial_write_string("Mirus kernel initialization\n\n");
   serial_write_string("Setting up serial driver...done\n");
-
   serial_write_string("Checking bootloader compatability...");
 
   // Ensure the bootloader actually understands our base revision (see spec).
