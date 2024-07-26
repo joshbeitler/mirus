@@ -6,6 +6,7 @@ struct CursorPosition {
   int y;
 };
 
+void terminal_initialize();
 void terminal_write_char(uint32_t c);
 void terminal_write_string(char* str);
 void clear();

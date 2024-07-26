@@ -55,22 +55,13 @@ void _start(void) {
   // }
 
   // load font
-  const char *fName = "u_vga16.sfn";
-  struct limine_file *file = getFile(fName);
+  struct limine_file *default_terminal_font = getFile("u_vga16.sfn");
 
-  if (file == NULL) {
+  if (default_terminal_font == NULL) {
     hcf();
   }
 
-  ssfn_src = file->address;
-
-  ssfn_dst.ptr = framebuffer->address;
-  ssfn_dst.w = framebuffer->width;
-  ssfn_dst.h = framebuffer->height;
-  ssfn_dst.p = framebuffer->pitch;
-  ssfn_dst.x = ssfn_dst.y = 0;
-  ssfn_dst.fg = 0xFFFFFF;
-
+  terminal_initialize(default_terminal_font, framebuffer);
   terminal_write_string("Hello, World!");
 
   // We're done, just hang...
