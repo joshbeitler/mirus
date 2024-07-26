@@ -107,9 +107,13 @@ Cargo.lock
 *.pdb
 build/
 iso_root/
-limine/
+./limine/
 *.iso
 limine.h
 ssfn.h
+
+
+src/libs/limine/include
+src/libs/ssfn/include
 
 # End of https://www.toptal.com/developers/gitignore/api/rust

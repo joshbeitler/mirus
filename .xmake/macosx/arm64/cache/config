@@ -1,0 +1,10 @@
+{
+    recheck = false,
+    mtimes = {
+        ["src/libs/ssfn/xmake.lua"] = 1722031352,
+        ["src/kernel/xmake.lua"] = 1722033191,
+        ["src/libs/limine/xmake.lua"] = 1722031042,
+        ["xmake.lua"] = 1722033693
+    },
+    options = { }
+}
