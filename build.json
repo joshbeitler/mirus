@@ -1,6 +1,41 @@
 {
   "recipes": [
     {
+      "name": "logger",
+      "description": "Logger library",
+      "sources": ["src/libs/logger/**/*.c"],
+      "tools": {
+        "compile": {
+          "cmd": "clang",
+          "args": [
+            "-target",
+            "x86_64-unknown-elf",
+            "-Wall",
+            "-Wextra",
+            "-std=gnu11",
+            "-ffreestanding",
+            "-fno-stack-protector",
+            "-fno-stack-check",
+            "-fno-lto",
+            "-fPIE",
+            "-m64",
+            "-mno-80387",
+            "-mno-mmx",
+            "-mno-sse",
+            "-mno-sse2",
+            "-mno-red-zone",
+            "-I",
+            "src/libs/logger/include",
+            "-c",
+            "{sources}",
+            "-o",
+            "{output_dir}/{output_file_stem}.o"
+          ],
+          "concurrent": true
+        }
+      }
+    },
+    {
       "name": "limine-header",
       "description": "Fetch latest Limine header from GitHub",
       "sources": [],
@@ -34,7 +69,7 @@
       "name": "kernel",
       "description": "Build the kernel",
       "sources": ["src/kernel/**/*.c"],
-      "dependencies": ["limine-header", "ssf-header"],
+      "dependencies": ["limine-header", "ssf-header", "logger"],
       "tools": {
         "compile": {
           "cmd": "clang",
@@ -57,6 +92,8 @@
             "-mno-red-zone",
             "-I",
             "src/kernel/include",
+            "-I",
+            "src/libs/logger/include",
             "-c",
             "{sources}",
             "-o",
