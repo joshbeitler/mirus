@@ -79,8 +79,9 @@ void _start(void) {
 
   terminal_initialize(default_terminal_font, framebuffer);
   serial_write_string("done.\n");
-  terminal_write_string("Hello, World!");
-  terminal_render();
+  // terminal_write_string("Mirus!\n\n");
+  // terminal_write_string("test!\n\n");
+  test_terminal();
 
   // We're done, just hang...
   serial_write_string("\nKernel initialization complete.\n");

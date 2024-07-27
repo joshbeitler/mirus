@@ -12,3 +12,5 @@ int memcmp(const void *s1, const void *s2, size_t n);
 size_t strlen(const char *str);
 
 bool checkStringEndsWith(const char *str, const char *end);
+void reverse(const char *str);
+char* itoa(int num, char* str, int base);

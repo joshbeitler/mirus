@@ -24,6 +24,7 @@ typedef struct {
   int width;
   int cursor_x;
   int cursor_y;
+  uint32_t current_fg_color;
 } Terminal;
 
 static Terminal terminal = {0};
@@ -83,9 +84,10 @@ void terminal_set_color(TerminalColor fg);
  */
 void terminal_clear();
 
-void terminal_scroll();
-
 /**
  * Renders the virtual terminal buffer to the framebuffer.
  */
 void terminal_render();
+
+void terminal_scroll();
+void test_terminal();

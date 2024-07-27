@@ -41,3 +41,4 @@ int serial_recieved();
 int serial_is_transmit_empty();
 void serial_write_char(char c);
 void serial_write_string(const char* str);
+void serial_write_int(int i);

@@ -34,3 +34,9 @@ void serial_write_string(const char* str) {
     serial_write_char(str[i]);
   }
 }
+
+void serial_write_int(int i) {
+  char str[32];
+  itoa(i, str, 10);
+  serial_write_string(str);
+}
