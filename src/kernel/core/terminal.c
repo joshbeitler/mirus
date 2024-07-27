@@ -15,11 +15,11 @@ void terminal_clear() {
     terminal.buffer[i].fg_color = TerminalColorWhite;
     terminal.buffer[i].bg_color = TerminalColorBlack;
   }
-
   terminal.cursor_x = 0;
   terminal.cursor_y = 0;
   terminal.needs_full_redraw = true;
   terminal.last_rendered_line = 0;
+  terminal.buffer_count = 0;
 }
 
 void terminal_setcolor(uint32_t fg) {
@@ -53,6 +53,8 @@ void terminal_initialize(
   terminal.current_fg_color = TerminalColorWhite;
   terminal.needs_full_redraw = true;
   terminal.last_rendered_line = 0;
+  terminal.buffer_count = 0;
+  terminal.flush_threshold = terminal.width; // Adjust as needed
 
   terminal_clear();
 }
@@ -65,7 +67,6 @@ void terminal_render() {
         ((uint32_t*)ssfn_dst.ptr)[y * (ssfn_dst.p / 4) + x] = 0;  // Set to black
       }
     }
-
     terminal.needs_full_redraw = false;
     terminal.last_rendered_line = 0;
   }
@@ -83,12 +84,12 @@ void terminal_render() {
       ssfn_dst.fg = cell.fg_color;
       ssfn_putc(cell.character);
     }
-
     ssfn_dst.x = 0;
     ssfn_dst.y += 16;
   }
 
   terminal.last_rendered_line = end_line;
+  terminal.buffer_count = 0;
 }
 
 void terminal_write_char(uint32_t c) {
@@ -107,7 +108,6 @@ void terminal_write_char(uint32_t c) {
       terminal.cursor_y--;
       terminal.cursor_x = terminal.width - 1;
     }
-
     int index = terminal.cursor_y * terminal.width + terminal.cursor_x;
     terminal.buffer[index].character = ' ';
   } else {
@@ -116,7 +116,6 @@ void terminal_write_char(uint32_t c) {
     terminal.buffer[index].character = c;
     terminal.buffer[index].fg_color = terminal.current_fg_color;
     terminal.cursor_x++;
-
     // Wrap if too wide
     if (terminal.cursor_x >= terminal.width) {
       terminal.cursor_x = 0;
@@ -130,11 +129,21 @@ void terminal_write_char(uint32_t c) {
   if (terminal.cursor_y > terminal.last_rendered_line) {
     terminal.last_rendered_line = terminal.cursor_y;
   }
+
+  terminal.buffer_count++;
+
+  if (c == '\n' || terminal.buffer_count >= terminal.flush_threshold) {
+    terminal_render();
+  }
 }
 
 void terminal_write_string(const char* str) {
   for (size_t i = 0; i < strlen(str); i++) {
     terminal_write_char(str[i]);
+  }
+  // Ensure any remaining buffered content is rendered
+  if (terminal.buffer_count > 0) {
+    terminal_render();
   }
 }
 
@@ -160,7 +169,9 @@ void terminal_scroll() {
 }
 
 void terminal_flush() {
-  terminal_render();
+  if (terminal.buffer_count > 0) {
+    terminal_render();
+  }
 }
 
 void test_terminal() {
@@ -174,7 +185,6 @@ void test_terminal() {
   terminal_write_string("This line is blue\n");
   terminal_setcolor(TerminalColorWhite);
   terminal_write_string("\n");
-  terminal_flush();
 
   // Test case 2: Scrolling
   terminal_write_string("Test Case 2: Scrolling\n");
@@ -184,9 +194,7 @@ void test_terminal() {
     itoa(i + 1, num_str, 10);
     terminal_write_string(num_str);
     terminal_write_string("\n");
-    if (i % 5 == 0) terminal_flush();  // Render every 5 lines
   }
-  terminal_flush();
 
   // Test case 3: Backspacing
   terminal_write_string("Test Case 3: Backspacing\n");
@@ -195,7 +203,6 @@ void test_terminal() {
     terminal_write_char('\b');
   }
   terminal_write_string("abc\n");
-  terminal_flush();
 
   // Edge case: Backspace at beginning of line
   terminal_write_string("Line 1\n");
@@ -204,11 +211,9 @@ void test_terminal() {
     terminal_write_char('\b');
   }
   terminal_write_string("Replaced\n");
-  terminal_flush();
 
   // Final message
   terminal_setcolor(TerminalColorGreen);
   terminal_write_string("\nAll test cases completed.\n");
   terminal_setcolor(TerminalColorWhite);
-  terminal_flush();
 }

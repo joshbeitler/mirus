@@ -27,6 +27,8 @@ typedef struct {
   uint32_t current_fg_color;
   bool needs_full_redraw;
   int last_rendered_line;
+  int buffer_count;
+  int flush_threshold;
  } Terminal;
 
 static Terminal terminal = {0};
