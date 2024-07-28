@@ -11,6 +11,7 @@
 #include <kernel/string.h>
 #include <kernel/terminal.h>
 #include <kernel/serial.h>
+#include <kernel/gdt.h>
 
 struct limine_file *getFile(const char *name) {
   struct limine_module_response *module_response = module_request.response;
@@ -28,9 +29,9 @@ struct limine_file *getFile(const char *name) {
 
 // Halt and catch fire function.
 static void hcf(void) {
-  asm ("cli");
+  __asm__ volatile ("cli");
   for (;;) {
-    asm ("hlt");
+    __asm__ volatile ("hlt");
   }
 }
 
@@ -76,12 +77,44 @@ void _start(void) {
   serial_write_string("done.\n");
 
   serial_write_string("Initializing terminal...");
-
   terminal_initialize(default_terminal_font, framebuffer);
   serial_write_string("done.\n");
   terminal_write_string("Mirus!\n\n");
+  terminal_write_string("Framebuffer, font renderer, and terminal...ok\n");
+
+  terminal_write_string("Initializing GDT...");
+  serial_write_string("Initializing GDT...");
+  // TODO: do the GDT stuff
+  gdt_initialize();
+  terminal_write_string("done\n");
+  serial_write_string("done\n");
+
+  terminal_write_string("Initializing LDT...");
+  serial_write_string("Initializing LDT...");
+  // TODO: do the LDT stuff
+  terminal_write_string("done\n");
+  serial_write_string("done\n");
+
+  terminal_write_string("Initializing IDT...");
+  serial_write_string("Initializing IDT...");
+  // TODO: do the IDT stuff
+  terminal_write_string("done\n");
+  serial_write_string("done\n");
+
+  terminal_write_string("Initializing ISRs...");
+  serial_write_string("Initializing ISRs...");
+  // TODO: do the ISR stuff
+  terminal_write_string("done\n");
+  serial_write_string("done\n");
+
+  terminal_write_string("Initializing IRQs...");
+  serial_write_string("Initializing IRQs...");
+  // TODO: do the IRQ stuff
+  terminal_write_string("done\n");
+  serial_write_string("done\n");
 
   // We're done, just hang...
+  terminal_write_string("\nKernel initialization complete.\n");
   serial_write_string("\nKernel initialization complete.\n");
   hcf();
 }

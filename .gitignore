@@ -113,8 +113,10 @@ iso_root/
 limine.h
 ssfn.h
 
+*.log
 
 src/libs/limine/include
 src/libs/ssfn/include
+src/libs/ia32/include
 
 # End of https://www.toptal.com/developers/gitignore/api/rust

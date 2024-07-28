@@ -17,19 +17,15 @@ typedef struct {
  * Defines a terminal with a buffer of character cells, as well as the current
  * cursor position. Used for writing to the framebuffer.
  */
- typedef struct {
+typedef struct {
   CharacterCell* buffer;
-  int width;
+  int buffer_size;
   int height;
+  int width;
   int cursor_x;
   int cursor_y;
-  int buffer_size;
   uint32_t current_fg_color;
-  bool needs_full_redraw;
-  int last_rendered_line;
-  int buffer_count;
-  int flush_threshold;
- } Terminal;
+} Terminal;
 
 static Terminal terminal = {0};
 

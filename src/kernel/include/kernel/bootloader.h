@@ -1,3 +1,5 @@
+#pragma once
+
 #include <limine.h>
 
 // Set the base revision to 2, this is recommended as this is the latest

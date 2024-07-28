@@ -4,6 +4,7 @@ set_version("0.1.0")
 includes("src/kernel")
 includes("src/libs/limine")
 includes("src/libs/ssfn")
+includes("src/libs/ia32")
 
 task("make-iso")
     set_category("build")
@@ -11,16 +12,14 @@ task("make-iso")
         import("core.project.project")
         import("core.project.config")
 
-        -- Get the project root directory
         local project_root = os.projectdir()
-
-        -- Get the build directory
         local build_dir = config.buildir()
+        local mode = config.mode() or "release"
 
-        -- Ensure the project is built
+        -- Ensure the project is built in the current mode
+        os.exec("xmake f -m " .. mode)
         os.exec("xmake")
 
-        -- Get the path to the kernel executable
         local kernel_target = project.target("kernel")
         if not kernel_target then
             raise("Kernel target not found!")
@@ -28,7 +27,6 @@ task("make-iso")
         local kernel_path = kernel_target:targetfile()
 
         if not os.isfile(kernel_path) then
-            local mode = config.mode() or "release"
             kernel_path = path.join(path.directory(kernel_path), mode, path.filename(kernel_path))
             if not os.isfile(kernel_path) then
                 raise("Kernel executable not found at " .. kernel_path)
@@ -47,7 +45,7 @@ task("make-iso")
         os.cd(project_root)
 
         -- Create ISO root directory in the build directory
-        local iso_root = path.join(build_dir, "iso_root")
+        local iso_root = path.join(build_dir, "iso_root_" .. mode)
         os.mkdir(iso_root)
         os.mkdir(path.join(iso_root, "boot"))
         os.mkdir(path.join(iso_root, "boot/limine"))
@@ -64,7 +62,7 @@ task("make-iso")
         os.cp(path.join(limine_dir, "BOOTIA32.EFI"), path.join(iso_root, "EFI/BOOT"))
 
         -- Create bootable ISO in the build directory
-        local iso_file = path.join(build_dir, "image.iso")
+        local iso_file = path.join(build_dir, "image_" .. mode .. ".iso")
         os.execv("xorriso", {"-as", "mkisofs", "-b", "boot/limine/limine-bios-cd.bin",
                              "-no-emul-boot", "-boot-load-size", "4", "-boot-info-table",
                              "--efi-boot", "boot/limine/limine-uefi-cd.bin",
@@ -87,36 +85,24 @@ task("run-qemu-uefi")
     on_run(function ()
         import("core.project.config")
 
-        -- Get the build directory
         local build_dir = config.buildir()
+        local mode = config.mode() or "release"
 
         -- Path to the ISO file
-        local iso_file = path.join(build_dir, "image.iso")
-
-        -- Check if the ISO file exists
-        if not os.isfile(iso_file) then
-            -- If the ISO doesn't exist, try to create it
-            print("ISO file not found. Attempting to create it...")
-            os.exec("xmake make-iso")
-
-            -- Check again if the ISO was created
-            if not os.isfile(iso_file) then
-                raise("Failed to create ISO file at " .. iso_file)
-            end
-        end
+        local iso_file = path.join(build_dir, "image_" .. mode .. ".iso")
 
         -- Path to the OVMF BIOS file
         local ovmf_path = path.join(os.projectdir(), "meta", "OVMF_CODE.fd")
 
         -- Construct the QEMU command
         local qemu_cmd = string.format(
-            "qemu-system-x86_64 -M q35 -m 2G -bios %s -cdrom %s -boot d -serial stdio",
+            "qemu-system-x86_64 -M q35 -m 2G -bios %s -cdrom %s -boot d -serial stdio -d int,cpu_reset,in_asm -D qemu.log -no-reboot -no-shutdown -s -S",
             ovmf_path,
             iso_file
         )
 
         -- Run QEMU
-        print("Running QEMU with command: " .. qemu_cmd)
+        print("Running QEMU in " .. mode .. " mode with command: " .. qemu_cmd)
         os.exec(qemu_cmd)
     end)
     set_menu {
