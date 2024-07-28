@@ -1,14 +1,13 @@
 bits 64
 section .text
 
-global load_gdt
-load_gdt:
-  cli
+global gdt_load
+gdt_load:
   lgdt [rdi]   ; Load the GDTR using the address passed in RDI
   ret
 
-global reload_segments
-reload_segments:
+global gdt_reload_segments
+gdt_reload_segments:
   ; Update the Code Segment
   ; We perform a far jump to flush the CPU pipeline and update CS register
   lea rax, [rel flush_cs]   ; Load the address of the label to jump to

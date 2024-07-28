@@ -3,17 +3,22 @@
 #include <stdint.h>
 #include <stddef.h>
 
-/**
- * Calls the LGDT instruction with the given GDTR
- *
- * @param gdtr The GDTR to load
- */
-extern void load_gdt(void* gdtr);
+#define GDT_ENTRIES 6
+#define SEGMENT_BASE 0x0
+#define SEGMENT_LIMIT 0xFFFFF
 
-/**
- * Reloads the segment registers with the current values in the GDT
- */
-extern void reload_segments();
+// Access rights
+#define ACCESS_KERNEL_CODE 0x9A  // Execute/Read, accessed, ring 0
+#define ACCESS_KERNEL_DATA 0x92  // Read/Write, accessed, ring 0
+#define ACCESS_USER_CODE 0xFA    // Execute/Read, accessed, ring 3
+#define ACCESS_USER_DATA 0xF2    // Read/Write, accessed, ring 3
+#define ACCESS_TSS 0x89           // TSS, ring 0
+
+// Flags
+#define FLAG_GRANULARITY_4KB 0xC // Granularity 4KB, 32-bit opcode
+#define FLAG_GRANULARITY_BYTE 0xA // Granularity byte, 32-bit opcode
+
+#define TSS_ADDRESS 0x00         // Actual TSS address needs to be set here
 
 /**
   * Represents a TSS segment descriptor
@@ -44,8 +49,8 @@ typedef struct {
  * Represents the GDTR register
  */
 typedef struct {
-    uint16_t limit;
-    uint64_t base;
+  uint16_t limit;
+  uint64_t base;
 } __attribute__((packed)) GDTR;
 
 /**
@@ -67,5 +72,17 @@ GdtSegmentDescriptor gdt_create_segment_descriptor(
  * Initializes the GDT for 64-bit long mode
 */
 void gdt_initialize();
+
+/**
+ * Calls the LGDT instruction with the given GDTR
+ *
+ * @param gdtr The GDTR to load
+ */
+extern void gdt_load(void* gdtr);
+
+/**
+ * Reloads the segment registers with the current values in the GDT
+ */
+extern void gdt_reload_segments();
 
 // TODO: needs TSS init
