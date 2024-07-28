@@ -46,44 +46,44 @@ void _start(void) {
 
   // Ensure the bootloader actually understands our base revision (see spec).
   if (LIMINE_BASE_REVISION_SUPPORTED == false) {
-    serial_write_string("failed.\n");
+    serial_write_string("failed\n");
     hcf();
   }
 
-  serial_write_string("done.\n");
+  serial_write_string("done\n");
 
   serial_write_string("Getting framebuffer...");
 
   // Ensure we got a framebuffer.
   if (framebuffer_request.response == NULL
     || framebuffer_request.response->framebuffer_count < 1) {
-    serial_write_string("failed.\n");
+    serial_write_string("failed\n");
     hcf();
   }
 
   // Fetch the first framebuffer.
   struct limine_framebuffer *framebuffer = framebuffer_request.response->framebuffers[0];
-  serial_write_string("done.\n");
+  serial_write_string("done\n");
 
   // load font
   serial_write_string("Getting default terminal font...");
   struct limine_file *default_terminal_font = getFile("u_vga16.sfn");
 
   if (default_terminal_font == NULL) {
-    serial_write_string("failed.\n");
+    serial_write_string("failed\n");
     hcf();
   }
 
-  serial_write_string("done.\n");
+  serial_write_string("done\n");
 
   serial_write_string("Initializing terminal...");
   terminal_initialize(default_terminal_font, framebuffer);
-  serial_write_string("done.\n");
+  serial_write_string("done\n");
   terminal_write_string("Mirus!\n\n");
   terminal_write_string("Framebuffer, font renderer, and terminal...ok\n");
 
   terminal_write_string("Initializing GDT...");
-  serial_write_string("Initializing GDT...");
+  serial_write_string("Initializing GDT...\n");
   // TODO: do the GDT stuff
   gdt_initialize();
   terminal_write_string("done\n");
