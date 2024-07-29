@@ -12,6 +12,7 @@
 #include <kernel/terminal.h>
 #include <kernel/serial.h>
 #include <kernel/gdt.h>
+#include <kernel/idt.h>
 #include <kernel/debug_logger.h>
 
 struct limine_file *getFile(const char *name) {
@@ -83,15 +84,13 @@ void _start(void) {
   gdt_initialize();
   log_message(&kernel_debug_logger, LOG_INFO, "Initializing GDT...done\n");
 
+  log_message(&kernel_debug_logger, LOG_INFO, "Initializing IDT\n");
+  idt_initialize();
+  log_message(&kernel_debug_logger, LOG_INFO, "Initializing IDT...done\n");
+
   // terminal_write_string("Initializing LDT...");
   // serial_write_string("Initializing LDT...");
   // // TODO: do the LDT stuff
-  // terminal_write_string("done\n");
-  // serial_write_string("done\n");
-
-  // terminal_write_string("Initializing IDT...");
-  // serial_write_string("Initializing IDT...");
-  // // TODO: do the IDT stuff
   // terminal_write_string("done\n");
   // serial_write_string("done\n");
 
