@@ -1,14 +1,14 @@
 #include <stdint.h>
 #include <stddef.h>
 
+#include <hal/serial.h>
+#include <libk/string.h>
+#include <printf/printf.h>
+
+#include <kernel/debug_logger.h>
 #include <kernel/panic.h>
 #include <kernel/isr.h>
-#include <kernel/string.h>
-#include <kernel/debug_logger.h>
 #include <kernel/terminal.h>
-#include <kernel/serial.h>
-
-#include <printf/printf.h>
 
 // TODO: I need to double check with the debugger that the display of the
 // registers is correct.

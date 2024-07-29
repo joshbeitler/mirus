@@ -1,6 +1,9 @@
 set_project("mirus")
 set_version("0.1.0")
 
+set_defaultarchs("x86_64")
+set_arch("x86_64")
+
 toolchain("clang-cross")
     set_kind("standalone")
     set_toolset("cc", "clang")
@@ -26,15 +29,18 @@ toolchain("clang-cross")
     add_asflags("-felf64")
     add_ldflags("-m elf_x86_64", { force = true })
     add_ldflags("-nostdlib", { force = true })
+    add_ldflags("-pie", { force = true })
 toolchain_end()
 
 set_toolchains("clang-cross")
 
-includes("src/kernel")
+includes("src/hal")
+includes("src/libs/libk")
 includes("src/libs/limine")
 includes("src/libs/ssfn")
 includes("src/libs/logger")
 includes("src/libs/printf")
+includes("src/kernel")
 
 task("make-iso")
     set_category("build")
@@ -45,10 +51,6 @@ task("make-iso")
         local project_root = os.projectdir()
         local build_dir = config.buildir()
         local mode = config.mode() or "release"
-
-        -- Ensure the project is built in the current mode
-        os.exec("xmake f -m " .. mode)
-        os.exec("xmake")
 
         local kernel_target = project.target("kernel")
         if not kernel_target then

@@ -8,14 +8,18 @@
 #include <ssfn.h>
 #include <printf/printf.h>
 
-#include <kernel/bootloader.h>
-#include <kernel/string.h>
-#include <kernel/terminal.h>
-#include <kernel/serial.h>
-#include <kernel/gdt.h>
-#include <kernel/idt.h>
+#include <hal/serial.h>
+#include <hal/gdt.h>
+#include <hal/idt.h>
+#include <hal/hal_logger.h>
+
+#include <libk/string.h>
+
 #include <kernel/debug_logger.h>
+#include <kernel/bootloader.h>
+#include <kernel/terminal.h>
 #include <kernel/panic.h>
+#include <kernel/isr.h>
 
 struct limine_file *getFile(const char *name) {
   struct limine_module_response *module_response = module_request.response;
@@ -37,6 +41,7 @@ struct limine_file *getFile(const char *name) {
 void _start(void) {
   serial_initialize();
   debug_logger_initialize();
+  hal_logger_initialize();
 
   log_message(&kernel_debug_logger, LOG_INFO, "Mirus kernel intialization\n");
   log_message(&kernel_debug_logger, LOG_INFO, "Serial driver loaded\n");
@@ -76,20 +81,24 @@ void _start(void) {
   idt_initialize();
   log_message(&kernel_debug_logger, LOG_INFO, "Successfully initialized IDT\n");
 
+  log_message(&kernel_debug_logger, LOG_INFO, "Starting ISR initialization\n");
+  isr_initialize();
+  log_message(&kernel_debug_logger, LOG_INFO, "Successfully initialized ISRs\n");
+
   log_message(&kernel_debug_logger, LOG_INFO, "Kernel initialization complete\n");
 
   printf_("Mirus, ahoy!\n\n");
 
-  log_message(&kernel_debug_logger, LOG_INFO, "Trying exception handler\n");
+  // log_message(&kernel_debug_logger, LOG_INFO, "Trying exception handler\n");
 
   // try the exception handler
-  int a = 10;
-  int b = 0;
-  int c = a / b; // This will generate a Division By Zero exception
-  // This line may not be reached; depends on how your handler reacts (e.g., halt system, log and continue)
-  log_message(&kernel_debug_logger, LOG_INFO, "Result of division: %d\n", c);
+  // int a = 10;
+  // int b = 0;
+  // int c = a / b; // This will generate a Division By Zero exception
+  // // This line may not be reached; depends on how your handler reacts (e.g., halt system, log and continue)
+  // log_message(&kernel_debug_logger, LOG_INFO, "Result of division: %d\n", c);
 
-  printf_("We're still here?\n");
+  // printf_("We're still here?\n");
 
   // terminal_write_string("Initializing LDT...");
   // serial_write_string("Initializing LDT...");

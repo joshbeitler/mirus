@@ -4,9 +4,10 @@
 #include <ssfn.h>
 #include <limine.h>
 
+#include <hal/serial.h>
+#include <libk/string.h>
+
 #include <kernel/terminal.h>
-#include <kernel/string.h>
-#include <kernel/serial.h>
 
 void terminal_clear() {
   for (int i = 0; i < terminal.buffer_size; i++) {

@@ -2,17 +2,12 @@
 
 #include <stdint.h>
 #include <stddef.h>
+#include <hal/idt.h>
 
 /**
- * Pushed to the stack when an interrupt occurs.
+ * Load the IDT with interrupt handlers.
  */
-typedef struct {
-  uint64_t rip;
-  uint64_t cs;
-  uint64_t rflags;
-  uint64_t rsp;
-  uint64_t ss;
-} InterruptFrame;
+void isr_initialize();
 
 __attribute__((interrupt))
 void isr_division_by_zero(InterruptFrame *frame, uint64_t error_code);

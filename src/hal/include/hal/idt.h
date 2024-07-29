@@ -47,6 +47,17 @@ IdtSegmentDescriptor idt_segment_create(
 );
 
 /**
+ * Pushed to the stack when an interrupt occurs.
+ */
+typedef struct {
+  uint64_t rip;
+  uint64_t cs;
+  uint64_t rflags;
+  uint64_t rsp;
+  uint64_t ss;
+} InterruptFrame;
+
+/**
  * Sets the IDT entry at the given index to the given handler
  */
 void idt_set_entry(int index, void* handler);
@@ -62,3 +73,9 @@ void idt_initialize();
  * @param gdtr The IDTR to load
  */
 extern void idt_load(void* idtr);
+
+/**
+ * A non-functional interrupt handler that is used as a placeholder
+ */
+__attribute__((interrupt))
+void default_interrupt_handler(InterruptFrame* frame);
