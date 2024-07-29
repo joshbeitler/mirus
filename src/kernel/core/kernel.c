@@ -14,6 +14,7 @@
 #include <kernel/gdt.h>
 #include <kernel/idt.h>
 #include <kernel/debug_logger.h>
+#include <kernel/panic.h>
 
 struct limine_file *getFile(const char *name) {
   struct limine_module_response *module_response = module_request.response;
@@ -27,14 +28,6 @@ struct limine_file *getFile(const char *name) {
   }
 
   return NULL;
-}
-
-// Halt and catch fire function.
-static void hcf(void) {
-  __asm__ volatile ("cli");
-  for (;;) {
-    __asm__ volatile ("hlt");
-  }
 }
 
 /**

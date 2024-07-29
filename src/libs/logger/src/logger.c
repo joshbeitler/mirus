@@ -1,3 +1,7 @@
+#include <stdint.h>
+#include <stddef.h>
+#include <stdarg.h>
+
 #include "logger.h"
 
 void log_init(logger_t *logger, log_writer_t *writers, int num_writers, log_level_t level) {
@@ -6,22 +10,76 @@ void log_init(logger_t *logger, log_writer_t *writers, int num_writers, log_leve
     logger->level = level;
 }
 
+
+static void write_number(log_writer_t writer, uint64_t num, int base, int is_signed, int uppercase) {
+    char buffer[65];
+    char *ptr = buffer + sizeof(buffer) - 1;
+    *ptr = '\0';
+
+    if (is_signed && (int64_t)num < 0) {
+        num = -num;
+        writer("-");
+    }
+
+    do {
+        uint64_t digit = num % base;
+        if (digit < 10) {
+            *--ptr = '0' + digit;
+        } else {
+            *--ptr = (uppercase ? 'A' : 'a') + (digit - 10);
+        }
+        num /= base;
+    } while (num);
+
+    writer(ptr);
+}
+
+
 static void mini_vprintf(log_writer_t writer, const char *format, va_list args) {
-    // Simplified implementation for demonstration
-    // You would expand this to properly format all required types
     const char *p = format;
-    char buffer[256];  // Simple buffer for output
+    char buffer[2];  // Buffer for single characters
 
     while (*p) {
         if (*p == '%') {
             p++;  // Skip the '%'
+            int uppercase = 0;  // Flag for uppercase hexadecimal
             switch (*p) {
                 case 's': {
                     char *str = va_arg(args, char *);
                     writer(str);
                     break;
                 }
-                // Add cases for other specifiers as needed
+                case 'd': {  // Signed decimal
+                    int num = va_arg(args, int);
+                    write_number(writer, num, 10, 1, 0);
+                    break;
+                }
+                case 'u': {  // Unsigned decimal
+                    uint32_t num = va_arg(args, uint32_t);
+                    write_number(writer, num, 10, 0, 0);
+                    break;
+                }
+                case 'l':
+                    p++;
+                    switch (*p) {
+                        case 'u': {  // Unsigned long decimal
+                            uint64_t num = va_arg(args, uint64_t);
+                            write_number(writer, num, 10, 0, 0);
+                            break;
+                        }
+                        case 'X': {  // Uppercase hexadecimal for uint64_t
+                            uint64_t num = va_arg(args, uint64_t);
+                            uppercase = 1;
+                            write_number(writer, num, 16, 0, uppercase);
+                            break;
+                        }
+                    }
+                    break;
+                case 'x': {  // Lowercase hexadecimal for uint32_t
+                    uint32_t num = va_arg(args, uint32_t);
+                    write_number(writer, num, 16, 0, 0);
+                    break;
+                }
             }
             p++;  // Skip the format specifier
         } else {
