@@ -32,6 +32,14 @@ To build Mirus, you will need to install all needed dependencies. You can use th
 
 Once the dependencies are installed, you can use `xmake` to build the kernel.
 
+Ensure that you set the platform target properly:
+
+```sh
+$ export MIRUS_TARGET=x86_64 # set MIRUS_TARGET x86_64 for `fish` shell
+```
+
+Then you can run `xmake` to build everything.
+
 ### Bootable disk image
 
 For building a bootable disk image to play with, you will want to build the

@@ -4,9 +4,10 @@
 #include <ssfn.h>
 #include <limine.h>
 
+#include <hal/serial.h>
+#include <libk/string.h>
+
 #include <kernel/terminal.h>
-#include <kernel/string.h>
-#include <kernel/serial.h>
 
 void terminal_clear() {
   for (int i = 0; i < terminal.buffer_size; i++) {
@@ -86,6 +87,8 @@ void terminal_write_char(uint32_t c) {
     if (terminal.cursor_y >= terminal.height) {
       terminal_scroll();
     }
+
+    terminal_render(); // Flush terminal with each newline
   } else if (c == '\b') {
     // Handle backspace
     if (terminal.cursor_x > 0) {
@@ -116,14 +119,18 @@ void terminal_write_char(uint32_t c) {
   }
 }
 
+/**
+ * This is a wrapper for terminal_write_char that matches the format
+ * that stdio.h expects for _putchar (in order for printf to work)
+*/
+void putchar_(char c) {
+  terminal_write_char(c);
+}
+
 void terminal_write_string(const char* str) {
   for (size_t i = 0; i < strlen(str); i++) {
     terminal_write_char(str[i]);
   }
-
-  // Really hacky, but for now, just re-render
-  // the whole screen each time we write
-  terminal_render();
 }
 
 void terminal_scroll() {

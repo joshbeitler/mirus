@@ -1,6 +1,9 @@
 set_project("mirus")
 set_version("0.1.0")
 
+set_defaultarchs("x86_64")
+set_arch("x86_64")
+
 toolchain("clang-cross")
     set_kind("standalone")
     set_toolset("cc", "clang")
@@ -15,9 +18,7 @@ toolchain("clang-cross")
     add_cxflags("-ffreestanding")
     add_cxflags("-fno-stack-protector")
     add_cxflags("-fno-stack-check")
-    add_cxflags("-fno-lto")
     add_cxflags("-fPIE")
-    add_cxflags("-m64")
     add_cxflags("-mno-80387")
     add_cxflags("-mno-mmx")
     add_cxflags("-mno-sse")
@@ -26,23 +27,20 @@ toolchain("clang-cross")
     add_cxflags("-fno-builtin")
     add_cxflags("-nostdlib")
     add_asflags("-felf64")
-    add_includedirs("$(projectdir)/src/kernel/include")
-    add_includedirs("$(projectdir)/src/libs/limine/include")
-    add_includedirs("$(projectdir)/src/libs/ssfn/include")
-    add_includedirs("$(projectdir)/src/libs/ia32/include")
     add_ldflags("-m elf_x86_64", { force = true })
     add_ldflags("-nostdlib", { force = true })
     add_ldflags("-pie", { force = true })
-    add_ldflags("-z text", { force = true })
-    add_ldflags("-z max-page-size=0x1000", { force = true })
 toolchain_end()
 
 set_toolchains("clang-cross")
 
-includes("src/kernel")
+includes("src/hal")
+includes("src/libs/libk")
 includes("src/libs/limine")
 includes("src/libs/ssfn")
 includes("src/libs/logger")
+includes("src/libs/printf")
+includes("src/kernel")
 
 task("make-iso")
     set_category("build")
@@ -53,10 +51,6 @@ task("make-iso")
         local project_root = os.projectdir()
         local build_dir = config.buildir()
         local mode = config.mode() or "release"
-
-        -- Ensure the project is built in the current mode
-        os.exec("xmake f -m " .. mode)
-        os.exec("xmake")
 
         local kernel_target = project.target("kernel")
         if not kernel_target then
@@ -134,10 +128,15 @@ task("run-qemu-uefi")
 
         -- Construct the QEMU command
         local qemu_cmd = string.format(
-            "qemu-system-x86_64 -M q35 -m 2G -bios %s -cdrom %s -boot d -serial stdio -d int,cpu_reset,in_asm -D qemu.log -no-reboot -no-shutdown -s -S",
+            "qemu-system-x86_64 -M q35 -m 2G -bios %s -cdrom %s -boot d -serial stdio -d int,cpu_reset,in_asm -D qemu.log -no-reboot -no-shutdown",
             ovmf_path,
             iso_file
-        )
+         )
+        --local qemu_cmd = string.format(
+        --    "qemu-system-x86_64 -M q35 -m 2G -bios %s -cdrom %s -boot d -serial stdio -d int,cpu_reset,in_asm -D qemu.log -no-reboot -no-shutdown -s -S",
+        --    ovmf_path,
+        --    iso_file
+        --)
 
         -- Run QEMU
         print("Running QEMU in " .. mode .. " mode with command: " .. qemu_cmd)

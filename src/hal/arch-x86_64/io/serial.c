@@ -1,5 +1,5 @@
-#include <kernel/serial.h>
-#include <kernel/string.h>
+#include <hal/serial.h>
+#include <libk/string.h>
 
 void serial_initialize() {
   write_byte(COM1 + 1, 0x00);    // Disable all interrupts
