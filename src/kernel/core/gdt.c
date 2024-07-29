@@ -2,7 +2,7 @@
 #include <stddef.h>
 
 #include <kernel/gdt.h>
-#include <kernel/serial.h>
+#include <kernel/debug_logger.h>
 
 static GdtSegmentDescriptor gdt[GDT_ENTRIES];
 static GDTR gdtr;
@@ -24,7 +24,7 @@ GdtSegmentDescriptor gdt_create_segment_descriptor(
 }
 
 void gdt_initialize() {
-  serial_write_string("  Building GDT entries...");
+  log_message(&kernel_debug_logger, LOG_INFO, "  Building GDT entries...");
 
   // Null descriptor
   gdt[0] = gdt_create_segment_descriptor(0, 0, 0x00, 0x0);
@@ -69,20 +69,17 @@ void gdt_initialize() {
     0x0
   );
 
-  serial_write_string("done\n");
+  log_message(&kernel_debug_logger, LOG_INFO, "done\n");
 
-  serial_write_string("  Building GDT...");
+  log_message(&kernel_debug_logger, LOG_INFO, "  Loading GDT...");
   gdtr.limit = sizeof(gdt) - 1;
   gdtr.base = (uint64_t) &gdt;
-  serial_write_string("done\n");
-
-  serial_write_string("  Loading GDT...");
   gdt_load(&gdtr);
-  serial_write_string("done\n");
+  log_message(&kernel_debug_logger, LOG_INFO, "done\n");
 
-  serial_write_string("  Reloading segments...");
+  log_message(&kernel_debug_logger, LOG_INFO, "  Reloading segments...");
   gdt_reload_segments();
-  serial_write_string("done\n");
+  log_message(&kernel_debug_logger, LOG_INFO, "done\n");
 
   // serial_write_string("Loading TSS...");
   // // load_tss(0x28);
