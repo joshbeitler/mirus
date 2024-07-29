@@ -88,6 +88,17 @@ void _start(void) {
   idt_initialize();
   log_message(&kernel_debug_logger, LOG_INFO, "Initializing IDT...done\n");
 
+  log_message(&kernel_debug_logger, LOG_INFO, "Kernel initialization...done\n");
+
+  log_message(&kernel_debug_logger, LOG_INFO, "\nTrying exception handler\n");
+
+  // try the exception handler
+  int a = 10;
+  int b = 0;
+  int c = a / b; // This will generate a Division By Zero exception
+  // This line may not be reached; depends on how your handler reacts (e.g., halt system, log and continue)
+  log_message(&kernel_debug_logger, LOG_INFO, "Result of division: %d\n", c);
+
   // terminal_write_string("Initializing LDT...");
   // serial_write_string("Initializing LDT...");
   // // TODO: do the LDT stuff

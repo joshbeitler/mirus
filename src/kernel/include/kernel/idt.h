@@ -10,7 +10,7 @@
  */
 typedef struct {
   uint16_t offset_low;      // Lower 16 bits of offset to procedure entry point
-  uint16_t code_segment;    // Segment selector for destination code segment
+  uint16_t selector;    // Segment selector for destination code segment
   uint8_t ist;              // Index into the TSS Interrupt Stack Table
   uint8_t type_attributes;  // Type and attributes
   uint16_t offset_middle;   // Middle 16 bits of offset
@@ -45,6 +45,11 @@ IdtSegmentDescriptor idt_segment_create(
   uint8_t type_attr,
   uint8_t ist
 );
+
+/**
+ * Sets the IDT entry at the given index to the given handler
+ */
+void idt_set_entry(int index, void* handler);
 
 /**
  * Initializes the IDT for 64-bit long mode
