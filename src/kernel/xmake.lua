@@ -1,6 +1,8 @@
 target("kernel")
     set_kind("binary")
     add_files("core/*.c")
+    add_files("debug/*.c")
+    add_files("interrupt/*.c")
     set_filename("kernel")
 
     add_includedirs("$(projectdir)/src/hal/include")

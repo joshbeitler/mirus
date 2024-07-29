@@ -15,11 +15,11 @@
 
 #include <libk/string.h>
 
-#include <kernel/debug_logger.h>
 #include <kernel/bootloader.h>
 #include <kernel/terminal.h>
-#include <kernel/panic.h>
-#include <kernel/isr.h>
+#include <kernel/interrupt/isr.h>
+#include <kernel/debug/debug_logger.h>
+#include <kernel/debug/panic.h>
 
 struct limine_file *getFile(const char *name) {
   struct limine_module_response *module_response = module_request.response;
