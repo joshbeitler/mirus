@@ -6,6 +6,7 @@
 
 #include <limine.h>
 #include <ssfn.h>
+#include <printf/printf.h>
 
 #include <kernel/bootloader.h>
 #include <kernel/string.h>
@@ -71,7 +72,7 @@ void _start(void) {
   terminal_initialize(default_terminal_font, framebuffer);
   log_message(&kernel_debug_logger, LOG_INFO, "done\n");
 
-  terminal_write_string("Mirus!\n\n");
+  // terminal_write_string("Mirus!\n\n");
 
   log_message(&kernel_debug_logger, LOG_INFO, "Initializing GDT\n");
   gdt_initialize();
@@ -83,14 +84,18 @@ void _start(void) {
 
   log_message(&kernel_debug_logger, LOG_INFO, "Kernel initialization...done\n");
 
-  log_message(&kernel_debug_logger, LOG_INFO, "\nTrying exception handler\n");
+  printf_("Is this thing on?\n");
+
+  // terminal_write_string("Mirus!\n\n");
+
+  // log_message(&kernel_debug_logger, LOG_INFO, "\nTrying exception handler\n");
 
   // try the exception handler
-  int a = 10;
-  int b = 0;
-  int c = a / b; // This will generate a Division By Zero exception
+  // int a = 10;
+  // int b = 0;
+  // int c = a / b; // This will generate a Division By Zero exception
   // This line may not be reached; depends on how your handler reacts (e.g., halt system, log and continue)
-  log_message(&kernel_debug_logger, LOG_INFO, "Result of division: %d\n", c);
+  // log_message(&kernel_debug_logger, LOG_INFO, "Result of division: %d\n", c);
 
   // terminal_write_string("Initializing LDT...");
   // serial_write_string("Initializing LDT...");

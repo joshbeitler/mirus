@@ -118,5 +118,7 @@ ssfn.h
 src/libs/limine/include
 src/libs/ssfn/include
 src/libs/ia32/include
+src/libs/printf/printf/printf.h
+src/libs/printf/printf/printf.c
 
 # End of https://www.toptal.com/developers/gitignore/api/rust

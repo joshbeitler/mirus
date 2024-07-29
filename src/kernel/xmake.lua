@@ -5,11 +5,22 @@ target("kernel")
     add_files("core/*.asm", {force = {nasm = true}})
     add_values("nasm.flags", "-felf64")
     set_filename("kernel")
+
+    add_includedirs("$(projectdir)/src/kernel/include")
+    add_includedirs("$(projectdir)/src/libs/limine/include")
+    add_includedirs("$(projectdir)/src/libs/ssfn/include")
+    add_includedirs("$(projectdir)/src/libs/logger/include")
+    add_includedirs("$(projectdir)/src/libs/printf")
+
     add_ldflags("-T$(projectdir)/meta/linker.ld", { force = true })
+    add_ldflags("-pie", { force = true })
+    add_ldflags("-z text", { force = true })
+    add_ldflags("-z max-page-size=0x1000", { force = true })
 
     add_deps("limine")
     add_deps("ssfn")
     add_deps("logger")
+    add_deps("printf")
 
     -- Debug configuration (always on for now)
     add_cxflags("-g")
