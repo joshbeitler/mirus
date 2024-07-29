@@ -1,13 +1,16 @@
 #pragma once
 
-#include <stdarg.h>  // Include standard argument macros
+#include <stdarg.h>
+
+#define MAX_LOG_MESSAGE_SIZE 1024
 
 // Define log levels
 typedef enum {
-  LOG_ERROR,
-  LOG_WARN,
+  LOG_DEBUG,
   LOG_INFO,
-  LOG_DEBUG
+  LOG_WARNING,
+  LOG_ERROR,
+  LOG_FATAL
 } log_level_t;
 
 typedef void (*log_writer_t)(const char*);

@@ -24,7 +24,7 @@ GdtSegmentDescriptor gdt_create_segment_descriptor(
 }
 
 void gdt_initialize() {
-  log_message(&kernel_debug_logger, LOG_INFO, "  Building GDT entries...");
+  log_message(&kernel_debug_logger, LOG_INFO, "  Building GDT entries\n");
 
   // Null descriptor
   gdt[0] = gdt_create_segment_descriptor(0, 0, 0x00, 0x0);
@@ -69,17 +69,17 @@ void gdt_initialize() {
     0x0
   );
 
-  log_message(&kernel_debug_logger, LOG_INFO, "done\n");
+  log_message(&kernel_debug_logger, LOG_INFO, "  GDT entries built\n");
 
-  log_message(&kernel_debug_logger, LOG_INFO, "  Loading GDT...");
+  log_message(&kernel_debug_logger, LOG_INFO, "  Loading GDT\n");
   gdtr.limit = sizeof(gdt) - 1;
   gdtr.base = (uint64_t) &gdt;
   gdt_load(&gdtr);
-  log_message(&kernel_debug_logger, LOG_INFO, "done\n");
+  log_message(&kernel_debug_logger, LOG_INFO, "  GDT loaded\n");
 
-  log_message(&kernel_debug_logger, LOG_INFO, "  Reloading segments...");
+  log_message(&kernel_debug_logger, LOG_INFO, "  Reloading segments\n");
   gdt_reload_segments();
-  log_message(&kernel_debug_logger, LOG_INFO, "done\n");
+  log_message(&kernel_debug_logger, LOG_INFO, "  Segments reloaded\n");
 
   // serial_write_string("Loading TSS...");
   // // load_tss(0x28);

@@ -125,16 +125,16 @@ task("run-qemu-uefi")
         local ovmf_path = path.join(os.projectdir(), "meta", "OVMF_CODE.fd")
 
         -- Construct the QEMU command
+        local qemu_cmd = string.format(
+            "qemu-system-x86_64 -M q35 -m 2G -bios %s -cdrom %s -boot d -serial stdio -d int,cpu_reset,in_asm -D qemu.log -no-reboot -no-shutdown",
+            ovmf_path,
+            iso_file
+         )
         --local qemu_cmd = string.format(
-        --    "qemu-system-x86_64 -M q35 -m 2G -bios %s -cdrom %s -boot d -serial stdio -d int,cpu_reset,in_asm -D qemu.log -no-reboot -no-shutdown",
+        --    "qemu-system-x86_64 -M q35 -m 2G -bios %s -cdrom %s -boot d -serial stdio -d int,cpu_reset,in_asm -D qemu.log -no-reboot -no-shutdown -s -S",
         --    ovmf_path,
         --    iso_file
         --)
-        local qemu_cmd = string.format(
-            "qemu-system-x86_64 -M q35 -m 2G -bios %s -cdrom %s -boot d -serial stdio -d int,cpu_reset,in_asm -D qemu.log -no-reboot -no-shutdown -s -S",
-            ovmf_path,
-            iso_file
-        )
 
         -- Run QEMU
         print("Running QEMU in " .. mode .. " mode with command: " .. qemu_cmd)

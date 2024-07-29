@@ -38,7 +38,7 @@ void idt_set_entry(int index, void *handler) {
 }
 
 void idt_initialize() {
-  log_message(&kernel_debug_logger, LOG_INFO, "  Building IDT entries...");
+  log_message(&kernel_debug_logger, LOG_INFO, "  Building IDT entries\n");
 
   memset((unsigned char *)&idt, 0, sizeof(idt)); // Clear whatever was there before
   idt_set_entry(0, isr_division_by_zero);
@@ -75,11 +75,15 @@ void idt_initialize() {
   idt_set_entry(31, isr_reserved_exception);
   idt_set_entry(32, isr_reserved_exception);
 
-  log_message(&kernel_debug_logger, LOG_INFO, "done\n");
+  log_message(&kernel_debug_logger, LOG_INFO, "  Built %d IDT entries\n", IDT_ENTRIES);
 
-  log_message(&kernel_debug_logger, LOG_INFO, "  Loading IDT...");
+  log_message(&kernel_debug_logger, LOG_INFO, "  Loading IDT\n");
   idtr.limit = sizeof(idt) - 1;
   idtr.base = (uint64_t) &idt;
   idt_load(&idtr);
-  log_message(&kernel_debug_logger, LOG_INFO, "done\n");
+  log_message(&kernel_debug_logger, LOG_INFO, "  IDT loaded\n");
+
+  log_message(&kernel_debug_logger, LOG_INFO, "  Enabling interrupts\n");
+  __asm__ volatile("sti");
+  log_message(&kernel_debug_logger, LOG_INFO, "  Interrupts enabled\n");
 }
