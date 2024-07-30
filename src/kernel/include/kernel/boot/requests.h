@@ -60,30 +60,3 @@ static inline struct limine_file *limine_get_file(const char *name) {
 
   return NULL;
 }
-
-/**
- * Human-readable names for memory map entry types
- */
-static const char* const memmap_type_strings[] = {
-  "Usable",
-  "Reserved",
-  "ACPI Reclaimable",
-  "ACPI NVS",
-  "Bad Memory",
-  "Bootloader Reclaimable",
-  "Kernel and Modules",
-  "Framebuffer"
-};
-
-#define MEMMAP_TYPE_COUNT (sizeof(memmap_type_strings) / sizeof(memmap_type_strings[0]))
-
-/**
- * Get a human-readable name for a memory map entry type
- */
-static inline const char* get_memmap_type_string(uint64_t type) {
-  if (type < MEMMAP_TYPE_COUNT) {
-    return memmap_type_strings[type];
-  }
-
-  return "Unknown";
-}

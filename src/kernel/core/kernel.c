@@ -16,26 +16,9 @@
 #include <kernel/terminal.h>
 #include <kernel/boot/requests.h>
 #include <kernel/interrupt/isr.h>
+#include <kernel/memory/memory.h>
 #include <kernel/debug/debug_logger.h>
 #include <kernel/debug/panic.h>
-
-char* format_memory_size(uint64_t size, char* buffer, size_t buffer_size) {
-  uint64_t kib = size / 1024;
-  uint64_t mib = kib / 1024;
-  uint64_t gib = mib / 1024;
-
-  if (gib > 0) {
-    uint64_t mib_remainder = mib % 1024;
-    snprintf_(buffer, buffer_size, "%llu bytes (%llu GiB + %llu MiB)", size, gib, mib_remainder);
-  } else if (mib > 0) {
-    uint64_t kib_remainder = kib % 1024;
-    snprintf_(buffer, buffer_size, "%llu bytes (%llu MiB + %llu KiB)", size, mib, kib_remainder);
-  } else {
-    snprintf_(buffer, buffer_size, "%llu bytes (%llu KiB)", size, kib);
-  }
-
-  return buffer;
-}
 
 /**
  * Kernel entry point
@@ -98,50 +81,7 @@ void _start(void) {
   // Look at memory map
   // do somthing with the entries. we will move this somewhere else
   log_message(&kernel_debug_logger, LOG_INFO, "Reading memory map\n");
-  uint64_t total_memory = 0;
-  uint64_t usable_memory = 0;
-  char size_buffer[64];
-  for (size_t i = 0; i < memory_map_request.response->entry_count; i++) {
-    struct limine_memmap_entry *entry = memory_map_request.response->entries[i];
-
-    // Process each entry
-    // entry->base is the base address of this memory region
-    // entry->length is the length of this region
-    // entry->type describes the type of this memory region
-
-    // Example: Print out memory map information
-    // Note: You'll need to implement your own print function
-    const char* entry_type = get_memmap_type_string(entry->type);
-    log_message(
-      &kernel_debug_logger,
-      LOG_INFO,
-      "  {base=0x%016llx, length=%s, type=%s}\n",
-      entry->base,
-      format_memory_size(entry->length, size_buffer, sizeof(size_buffer)),
-      entry_type
-    );
-
-    total_memory += entry->length;
-
-    // Sum up usable memory
-    if (entry->type == LIMINE_MEMMAP_USABLE) {
-      usable_memory += entry->length;
-    }
-  }
-
-  log_message(
-    &kernel_debug_logger,
-    LOG_INFO,
-    "Total system memory %s\n",
-    format_memory_size(total_memory, size_buffer, sizeof(size_buffer))
-  );
-  log_message(
-    &kernel_debug_logger,
-    LOG_INFO,
-    "Usable system memory %s\n",
-    format_memory_size(usable_memory, size_buffer, sizeof(size_buffer))
-  );
-
+  read_memory_map(memory_map_request.response->entry_count, memory_map_request.response->entries);
   log_message(&kernel_debug_logger, LOG_INFO, "Kernel initialization complete\n");
 
   printf_("Mirus, ahoy!\n\n");
