@@ -13,26 +13,28 @@
 #include <hal/idt.h>
 #include <hal/hal_logger.h>
 
-#include <libk/string.h>
-
-#include <kernel/bootloader.h>
 #include <kernel/terminal.h>
+#include <kernel/boot/requests.h>
 #include <kernel/interrupt/isr.h>
 #include <kernel/debug/debug_logger.h>
 #include <kernel/debug/panic.h>
 
-struct limine_file *getFile(const char *name) {
-  struct limine_module_response *module_response = module_request.response;
+char* format_memory_size(uint64_t size, char* buffer, size_t buffer_size) {
+  uint64_t kib = size / 1024;
+  uint64_t mib = kib / 1024;
+  uint64_t gib = mib / 1024;
 
-  for (size_t i = 0; i < module_response->module_count; i++) {
-    struct limine_file *f = module_response->modules[i];
-
-    if (checkStringEndsWith(f->path, name)) {
-      return f;
-    }
+  if (gib > 0) {
+    uint64_t mib_remainder = mib % 1024;
+    snprintf_(buffer, buffer_size, "%llu bytes (%llu GiB + %llu MiB)", size, gib, mib_remainder);
+  } else if (mib > 0) {
+    uint64_t kib_remainder = kib % 1024;
+    snprintf_(buffer, buffer_size, "%llu bytes (%llu MiB + %llu KiB)", size, mib, kib_remainder);
+  } else {
+    snprintf_(buffer, buffer_size, "%llu bytes (%llu KiB)", size, kib);
   }
 
-  return NULL;
+  return buffer;
 }
 
 /**
@@ -62,8 +64,16 @@ void _start(void) {
   struct limine_framebuffer *framebuffer = framebuffer_request.response->framebuffers[0];
   log_message(&kernel_debug_logger, LOG_INFO, "Successfully loaded framebuffer\n");
 
+  // Ensure we got a memory map
+  if (memory_map_request.response == NULL
+    || memory_map_request.response->entry_count == 0) {
+    log_message(&kernel_debug_logger, LOG_FATAL, "Couldn't get memory map\n");
+    hcf();
+  }
+  log_message(&kernel_debug_logger, LOG_INFO, "Successfully loaded memory map\n");
+
   // load font
-  struct limine_file *default_terminal_font = getFile("u_vga16.sfn");
+  struct limine_file *default_terminal_font = limine_get_file("u_vga16.sfn");
   if (default_terminal_font == NULL) {
     log_message(&kernel_debug_logger, LOG_FATAL, "Couldn't load default font: u_vga16.sfn\n");
     hcf();
@@ -84,6 +94,53 @@ void _start(void) {
   log_message(&kernel_debug_logger, LOG_INFO, "Starting ISR initialization\n");
   isr_initialize();
   log_message(&kernel_debug_logger, LOG_INFO, "Successfully initialized ISRs\n");
+
+  // Look at memory map
+  // do somthing with the entries. we will move this somewhere else
+  log_message(&kernel_debug_logger, LOG_INFO, "Reading memory map\n");
+  uint64_t total_memory = 0;
+  uint64_t usable_memory = 0;
+  char size_buffer[64];
+  for (size_t i = 0; i < memory_map_request.response->entry_count; i++) {
+    struct limine_memmap_entry *entry = memory_map_request.response->entries[i];
+
+    // Process each entry
+    // entry->base is the base address of this memory region
+    // entry->length is the length of this region
+    // entry->type describes the type of this memory region
+
+    // Example: Print out memory map information
+    // Note: You'll need to implement your own print function
+    const char* entry_type = get_memmap_type_string(entry->type);
+    log_message(
+      &kernel_debug_logger,
+      LOG_INFO,
+      "  {base=0x%016llx, length=%s, type=%s}\n",
+      entry->base,
+      format_memory_size(entry->length, size_buffer, sizeof(size_buffer)),
+      entry_type
+    );
+
+    total_memory += entry->length;
+
+    // Sum up usable memory
+    if (entry->type == LIMINE_MEMMAP_USABLE) {
+      usable_memory += entry->length;
+    }
+  }
+
+  log_message(
+    &kernel_debug_logger,
+    LOG_INFO,
+    "Total system memory %s\n",
+    format_memory_size(total_memory, size_buffer, sizeof(size_buffer))
+  );
+  log_message(
+    &kernel_debug_logger,
+    LOG_INFO,
+    "Usable system memory %s\n",
+    format_memory_size(usable_memory, size_buffer, sizeof(size_buffer))
+  );
 
   log_message(&kernel_debug_logger, LOG_INFO, "Kernel initialization complete\n");
 
