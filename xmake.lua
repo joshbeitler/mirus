@@ -11,6 +11,7 @@ toolchain("clang-cross")
     set_toolset("ar", "llvm-ar")
     set_toolset("strip", "llvm-strip")
     set_toolset("as", "nasm")
+
     add_cxflags("-target x86_64-unknown-elf")
     add_cxflags("-Wall")
     add_cxflags("-Wextra")
@@ -26,7 +27,9 @@ toolchain("clang-cross")
     add_cxflags("-mno-red-zone")
     add_cxflags("-fno-builtin")
     add_cxflags("-nostdlib")
+
     add_asflags("-felf64")
+
     add_ldflags("-m elf_x86_64", { force = true })
     add_ldflags("-nostdlib", { force = true })
     add_ldflags("-pie", { force = true })

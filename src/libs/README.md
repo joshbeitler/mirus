@@ -4,7 +4,7 @@
 
 - limine
 - ssfn
-- printf
+- printf (from [freestanding printf implementation](https://github.com/eyalroz/printf))
 
 ## Mirus libraries
 

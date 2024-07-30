@@ -9,7 +9,7 @@ target("limine")
         import("net.http")
 
         -- Set the directory for the Limine header
-        local header_dir = path.join(project_root, "src", "libs", "limine", "include")
+        local header_dir = path.join(project_root, "src", "libs", "limine", "include", "limine")
 
         -- Create the directory if it doesn't exist
         os.mkdir(header_dir)
@@ -28,6 +28,6 @@ target("limine")
 
     -- Add a clean rule to remove the downloaded header
     on_clean(function (target)
-        local header_path = path.join(project_root, "src", "libs", "limine", "include", "limine.h")
+        local header_path = path.join(project_root, "src", "libs", "limine", "include", "limine", "limine.h")
         os.rm(header_path)
     end)

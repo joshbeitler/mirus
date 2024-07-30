@@ -4,8 +4,8 @@
 #include <stddef.h>
 #include <stdbool.h>
 
-#include <limine.h>
-#include <ssfn.h>
+#include <limine/limine.h>
+#include <ssfn/ssfn.h>
 #include <printf/printf.h>
 
 #include <hal/serial.h>
