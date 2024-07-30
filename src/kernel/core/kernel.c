@@ -106,12 +106,6 @@ void _start(void) {
   // terminal_write_string("done\n");
   // serial_write_string("done\n");
 
-  // terminal_write_string("Initializing ISRs...");
-  // serial_write_string("Initializing ISRs...");
-  // // TODO: do the ISR stuff
-  // terminal_write_string("done\n");
-  // serial_write_string("done\n");
-
   // terminal_write_string("Initializing IRQs...");
   // serial_write_string("Initializing IRQs...");
   // // TODO: do the IRQ stuff
@@ -119,7 +113,5 @@ void _start(void) {
   // serial_write_string("done\n");
 
   // We're done, just hang...
-  // terminal_write_string("\nKernel initialization complete.\n");
-  // serial_write_string("\nKernel initialization complete.\n");
   hcf();
 }

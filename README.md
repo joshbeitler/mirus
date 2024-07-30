@@ -1,3 +1,5 @@
+<img src="docs/logo.png" width="150px">
+
 # Mirus
 
 README WIP. Mirus is a complete hobby operating system project, written in C,
