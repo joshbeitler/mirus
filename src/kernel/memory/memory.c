@@ -45,8 +45,6 @@ void read_memory_map(uint64_t entry_count, struct limine_memmap_entry **entries)
     // entry->length is the length of this region
     // entry->type describes the type of this memory region
 
-    // Example: Print out memory map information
-    // Note: You'll need to implement your own print function
     const char* entry_type = get_memmap_type_string(entry->type);
     log_message(
       &kernel_debug_logger,

@@ -31,4 +31,10 @@ const char* get_memmap_type_string(uint64_t type);
  */
 char* format_memory_size(uint64_t size, char* buffer, size_t buffer_size);
 
+/**
+ * Read the memory map from the bootloader
+ *
+ * TODO: This should be replaced with a proper memory map API that abstracts
+ *      the bootloader interface
+ */
 void read_memory_map(uint64_t entry_count, struct limine_memmap_entry **entries);
