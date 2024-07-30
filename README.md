@@ -1,4 +1,4 @@
-<img src="docs/logo.png" width="150px">
+<img src="docs/logo.png" width="150px" style="text-align:center">
 
 # Mirus
 
@@ -24,9 +24,9 @@ For more information on the design goals of Mirus, see `docs/design-goals.md`.
 
 ## Components
 
-- `kernel` a 64-bit hybrid kernel written in C and Assembly.
-- `hal` - the hardware abstraction layer for Mirus providing a common interface for hardware devices.
-- `libs` - a collection of libraries for use in Mirus kernel and userspace.
+- [`kernel`](./src/kernel/README.md) a 64-bit hybrid kernel written in C and Assembly.
+- [`hal`](./src/hal/README.md) - the hardware abstraction layer for Mirus providing a common interface for hardware devices.
+- [`libs`](./src/libs/README.md) - a collection of libraries for use in Mirus kernel and userspace.
 
 ## Building
 
