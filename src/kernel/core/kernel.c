@@ -19,6 +19,7 @@
 #include <kernel/memory/memory.h>
 #include <kernel/debug/debug_logger.h>
 #include <kernel/debug/panic.h>
+#include <kernel/syscalls/syscalls.h>
 
 /**
  * Kernel entry point
@@ -82,9 +83,33 @@ void _start(void) {
   // do somthing with the entries. we will move this somewhere else
   log_message(&kernel_debug_logger, LOG_INFO, "Reading memory map\n");
   read_memory_map(memory_map_request.response->entry_count, memory_map_request.response->entries);
-  log_message(&kernel_debug_logger, LOG_INFO, "Kernel initialization complete\n");
 
+  log_message(&kernel_debug_logger, LOG_INFO, "Starting system call initialization\n");
+  syscalls_initialize();
+  log_message(&kernel_debug_logger, LOG_INFO, "Successfully initialized system calls\n");
+
+  log_message(&kernel_debug_logger, LOG_INFO, "Kernel initialization complete\n");
   printf_("Mirus, ahoy!\n\n");
+
+  printf_("Testing sys calls\n");
+  const char test_str[] = "Hello, Kernel World!";
+  int test_fd = 1;  // Assume 1 is stdout
+  // Create syscall arguments
+  SystemCallArgs args = {
+    .args = {test_fd, (uint64_t)test_str, sizeof(test_str) - 1, 0, 0, 0}
+  };
+
+  // Call syscall dispatcher directly
+  SystemCallReturn result = syscall_handler(1, &args);  // Assume 1 is the syscall number for write
+
+  // Check results
+  if (result.error == SYSCALL_SUCCESS) {
+    printf_("Write syscall test successful!\n");
+    printf_("Bytes written: %ld (expected %zu)\n", result.value, sizeof(test_str) - 1);
+  } else {
+    printf_("Write syscall test failed with error: %d\n", result.error);
+  }
+
 
   // log_message(&kernel_debug_logger, LOG_INFO, "Trying exception handler\n");
 
