@@ -1,6 +1,6 @@
 #pragma once
 
-#include <kernel/interrupt/isr.h>
+#include <kernel/interrupts.h>
 
 /**
  * Kernel panic, another L for da OG :(

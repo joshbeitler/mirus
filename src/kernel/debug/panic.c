@@ -6,9 +6,9 @@
 #include <printf/printf.h>
 
 #include <kernel/terminal.h>
-#include <kernel/interrupt/isr.h>
-#include <kernel/debug/debug_logger.h>
-#include <kernel/debug/panic.h>
+#include <kernel/interrupts.h>
+#include <kernel/debug.h>
+#include <kernel/panic.h>
 
 // TODO: I need to double check with the debugger that the display of the
 // registers is correct.

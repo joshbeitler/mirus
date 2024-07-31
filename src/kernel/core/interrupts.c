@@ -3,9 +3,9 @@
 
 #include <hal/idt.h>
 
-#include <kernel/interrupt/isr.h>
-#include <kernel/debug/panic.h>
-#include <kernel/debug/debug_logger.h>
+#include <kernel/interrupts.h>
+#include <kernel/panic.h>
+#include <kernel/debug.h>
 
 void isr_initialize() {
   log_message(&kernel_debug_logger, LOG_INFO, "  Registering ISRs\n");

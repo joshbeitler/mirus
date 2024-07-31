@@ -1,6 +1,6 @@
 #include <hal/serial.h>
 
-#include <kernel/debug/debug_logger.h>
+#include <kernel/debug.h>
 
 log_writer_t kernel_writers[] = {serial_write_string};
 logger_t kernel_debug_logger;

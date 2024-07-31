@@ -4,8 +4,8 @@
 #include <printf/printf.h>
 #include <limine/limine.h>
 
-#include <kernel/memory/memory.h>
-#include <kernel/debug/debug_logger.h>
+#include <kernel/memory.h>
+#include <kernel/debug.h>
 
 const char* get_memmap_type_string(uint64_t type) {
   if (type < MEMMAP_TYPE_COUNT) {

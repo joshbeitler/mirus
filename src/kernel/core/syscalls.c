@@ -3,8 +3,8 @@
 #include <stdbool.h>
 #include <stdarg.h>
 
-#include <kernel/syscalls/syscalls.h>
-#include <kernel/debug/debug_logger.h>
+#include <kernel/syscalls.h>
+#include <kernel/debug.h>
 
 /*
  * ============================================================================

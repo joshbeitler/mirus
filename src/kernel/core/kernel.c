@@ -14,12 +14,12 @@
 #include <hal/hal_logger.h>
 
 #include <kernel/terminal.h>
-#include <kernel/boot/requests.h>
-#include <kernel/interrupt/isr.h>
-#include <kernel/memory/memory.h>
-#include <kernel/debug/debug_logger.h>
-#include <kernel/debug/panic.h>
-#include <kernel/syscalls/syscalls.h>
+#include <kernel/bootloader.h>
+#include <kernel/interrupts.h>
+#include <kernel/memory.h>
+#include <kernel/debug.h>
+#include <kernel/panic.h>
+#include <kernel/syscalls.h>
 
 /**
  * Kernel entry point
