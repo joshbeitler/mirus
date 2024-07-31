@@ -136,17 +136,6 @@ SystemCallReturn syscall_handler(
   }
 
   const SystemCallEntry* entry = &syscall_table[syscall_number];
-  char* formatted_args = format_syscall_args(args, entry->num_args);
-
-  if (DEBUG) {
-    log_message(
-      &kernel_debug_logger,
-      LOG_DEBUG,
-      "  Dispatching system call: {name=%s, args={%s}}\n",
-      syscall_table[syscall_number].name,
-      formatted_args
-    );
-  }
 
   // Validate number of arguments
   if (syscall_table[syscall_number].num_args > 6) {
@@ -159,6 +148,18 @@ SystemCallReturn syscall_handler(
     }
 
     return (SystemCallReturn){.value = 0, .error = SYSCALL_ERROR_INVALID_ARGS};
+  }
+
+  if (DEBUG) {
+    char* formatted_args = format_syscall_args(args, entry->num_args);
+
+    log_message(
+      &kernel_debug_logger,
+      LOG_DEBUG,
+      "  Dispatching system call: {name=%s, args={%s}}\n",
+      syscall_table[syscall_number].name,
+      formatted_args
+    );
   }
 
   result = entry->handler(args);
