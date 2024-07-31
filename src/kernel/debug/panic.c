@@ -5,10 +5,11 @@
 #include <libk/string.h>
 #include <printf/printf.h>
 
-#include <kernel/terminal.h>
 #include <kernel/interrupts.h>
 #include <kernel/debug.h>
 #include <kernel/panic.h>
+
+#include <drivers/terminal.h>
 
 // TODO: I need to double check with the debugger that the display of the
 // registers is correct.

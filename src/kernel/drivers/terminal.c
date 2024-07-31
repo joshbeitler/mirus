@@ -7,7 +7,7 @@
 #include <hal/serial.h>
 #include <libk/string.h>
 
-#include <kernel/terminal.h>
+#include <drivers/terminal.h>
 
 void terminal_clear() {
   for (int i = 0; i < terminal.buffer_size; i++) {
