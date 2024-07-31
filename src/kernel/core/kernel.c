@@ -74,7 +74,7 @@ void _start(void) {
   log_message(&kernel_debug_logger, LOG_INFO, "Virtual terminal initialized\n");
 
   log_message(&kernel_debug_logger, LOG_INFO, "Starting GDT initialization\n");
-  gdt_initialize();
+  gdt_initialize(kernel_stack_top);
   log_message(&kernel_debug_logger, LOG_INFO, "Successfully initialized GDT\n");
 
   log_message(&kernel_debug_logger, LOG_INFO, "Starting IDT initialization\n");

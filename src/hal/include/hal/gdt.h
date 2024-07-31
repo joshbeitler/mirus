@@ -3,7 +3,7 @@
 #include <stdint.h>
 #include <stddef.h>
 
-#define GDT_ENTRIES 6
+#define GDT_ENTRIES 7
 #define SEGMENT_BASE 0x0
 #define SEGMENT_LIMIT 0xFFFFF
 
@@ -18,18 +18,16 @@
 #define FLAG_GRANULARITY_4KB 0xC // Granularity 4KB, 32-bit opcode
 #define FLAG_GRANULARITY_BYTE 0xA // Granularity byte, 32-bit opcode
 
-#define TSS_ADDRESS 0x00         // Actual TSS address needs to be set here
-
 /**
   * Represents a TSS segment descriptor
  */
 typedef struct {
-  uint32_t reserved0;
+  uint32_t reserved1;
   uint64_t rsp[3];
-  uint64_t reserved1;
-  uint64_t ist[7];
   uint64_t reserved2;
-  uint16_t reserved3;
+  uint64_t ist[7];
+  uint64_t reserved3;
+  uint16_t reserved4;
   uint16_t iomap_base;
 } __attribute__((packed)) TssSegmentDescriptor;
 
@@ -84,5 +82,3 @@ extern void gdt_load(void* gdtr);
  * Reloads the segment registers with the current values in the GDT
  */
 extern void gdt_reload_segments();
-
-// TODO: needs TSS init

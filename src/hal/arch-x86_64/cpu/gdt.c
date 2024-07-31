@@ -7,6 +7,8 @@
 static GdtSegmentDescriptor gdt[GDT_ENTRIES];
 static GDTR gdtr;
 
+static TssSegmentDescriptor tss;
+
 GdtSegmentDescriptor gdt_create_segment_descriptor(
   uint32_t base,
   uint32_t limit,
@@ -23,7 +25,7 @@ GdtSegmentDescriptor gdt_create_segment_descriptor(
   };
 }
 
-void gdt_initialize() {
+void gdt_initialize(uintptr_t kernel_stack_ptr) {
   log_message(&hal_logger, LOG_INFO, "  Building GDT entries\n");
 
   // Null descriptor
@@ -61,13 +63,33 @@ void gdt_initialize() {
     FLAG_GRANULARITY_4KB
   );
 
-  // TSS
-  gdt[5] = gdt_create_segment_descriptor(
-    TSS_ADDRESS,
-    sizeof(TssSegmentDescriptor) - 1,
-    ACCESS_TSS,
-    0x0
-  );
+  // Set up the TSS
+  log_message(&hal_logger, LOG_INFO, "  Building TSS entries\n");
+  tss.iomap_base = sizeof(tss);
+  tss.rsp[0] = kernel_stack_ptr;
+
+  // Create the TSS descriptor
+  uint64_t tss_base = (uint64_t)&tss;
+  uint32_t tss_limit = sizeof(tss) - 1;
+
+  gdt[5] = (GdtSegmentDescriptor) {
+    .limit_low = tss_limit & 0xFFFF,
+    .base_low = tss_base & 0xFFFF,
+    .base_middle = (tss_base >> 16) & 0xFF,
+    .access = ACCESS_TSS,
+    .limit_high_flags = ((tss_limit >> 16) & 0x0F) | 0x00,
+    .base_high = (tss_base >> 24) & 0xFF
+  };
+
+  gdt[6] = (GdtSegmentDescriptor) {
+    .limit_low = (tss_base >> 32) & 0xFFFF,
+    .base_low = (tss_base >> 48) & 0xFFFF,
+    .base_middle = 0,
+    .access = 0,
+    .limit_high_flags = 0,
+    .base_high = 0
+  };
+  log_message(&hal_logger, LOG_INFO, "  TSS entries built\n");
 
   log_message(&hal_logger, LOG_INFO, "  GDT entries built\n");
 
@@ -81,7 +103,7 @@ void gdt_initialize() {
   gdt_reload_segments();
   log_message(&hal_logger, LOG_INFO, "  Segments reloaded\n");
 
-  // serial_write_string("Loading TSS...");
-  // // load_tss(0x28);
-  // serial_write_string("done.\n");
+  log_message(&hal_logger, LOG_INFO, "  Loading TSS\n");
+  asm volatile("ltr %%ax" : : "a" (0x28)); // 0x28 is the offset of TSS in GDT (5 * 8)
+  log_message(&hal_logger, LOG_INFO, "  TSS loaded\n");
 }
