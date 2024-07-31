@@ -12,6 +12,7 @@
  * ============================================================================
  */
 
+// Dummy write implementation
 DEFINE_SYSCALL(read, 3, ARG_INT, ARG_PTR, ARG_SIZE) {
   if (!syscall_validate_args(args, 3, ARG_INT, ARG_PTR, ARG_SIZE)) {
     return (SystemCallReturn){.value = 0, .error = SYSCALL_ERROR_INVALID_ARGS};
@@ -26,6 +27,7 @@ DEFINE_SYSCALL(read, 3, ARG_INT, ARG_PTR, ARG_SIZE) {
   return (SystemCallReturn){.value = count, .error = SYSCALL_SUCCESS};
 }
 
+// Dummy read implementation
 DEFINE_SYSCALL(write, 3, ARG_INT, ARG_PTR, ARG_SIZE) {
   if (!syscall_validate_args(args, 3, ARG_INT, ARG_PTR, ARG_SIZE)) {
     return (SystemCallReturn){.value = 0, .error = SYSCALL_ERROR_INVALID_ARGS};
@@ -52,6 +54,7 @@ static const SystemCallEntry syscall_table[SYSCALL_COUNT] = {
  * System call utility functions
  * ============================================================================
  */
+
 bool syscall_validate_args(const SystemCallArgs* args, int num_args, ...) {
   va_list ap;
   va_start(ap, num_args);
