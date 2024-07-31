@@ -67,3 +67,32 @@ calls.
   - [See this list](https://github.com/appcypher/awesome-wasm-langs)
   - Go or Rust. Something with a good standard library and tooling, a strong
     community, and nice memory management.
+
+## Appendix B: Diagram
+
+```
+Kernel Space:
++-----------------------------------+
+|           Kernel Core             |
++-----------------------------------+
+|        WASM Runtime Core          |
+|   +---------------------------+   |
+|   |  WASM Loader              |   |
+|   |  Memory Manager           |   |
+|   |  Instruction Interpreter  |   |
+|   |  JIT Compiler             |   |
+|   +---------------------------+   |
++-----------------------------------+
+              |
+              | Context Switch
+              V
+User Space:
++-----------------------------------+
+|      WASM Program Execution       |
+|   +---------------------------+   |
+|   |  WASM Module Memory       |   |
+|   |  WASM Stack               |   |
+|   |  Executed Instructions    |   |
+|   +---------------------------+   |
++-----------------------------------+
+```

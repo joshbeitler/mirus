@@ -45,6 +45,8 @@ includes("src/libs/logger")
 includes("src/libs/printf")
 includes("src/kernel")
 
+includes("src/apps/hello")
+
 task("make-iso")
     set_category("build")
     on_run(function ()
