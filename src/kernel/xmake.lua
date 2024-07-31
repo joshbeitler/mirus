@@ -27,6 +27,7 @@ target("kernel")
     --add_links("libk", "printf", "logger", "hal")
 
     -- Debug configuration (always on for now)
+    add_cxflags("-DDEBUG=1")
     add_cxflags("-g")
     add_cxflags("-O0")
     add_ldflags("-g", { force = true })

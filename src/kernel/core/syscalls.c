@@ -58,6 +58,9 @@ static const SystemCallEntry syscall_table[SYSCALL_COUNT] = {
  * ============================================================================
  */
 
+// TODO: Not thread safe due to static buffer
+// TODO: Treats all argument types as hexedecimal. Add special conditions for
+//       other types.
 static char* format_syscall_args(const SystemCallArgs* args, int num_args) {
   static char arg_str[256];
   memset(arg_str, 0, sizeof(arg_str));
@@ -103,73 +106,74 @@ bool syscall_validate_args(const SystemCallArgs* args, int num_args, ...) {
   return valid;
 }
 
-// static void log_syscall_args(const SystemCallArgs* args, int num_args) {
-//   char arg_str[256] = {0};  // Adjust size as needed
-//   int offset = 0;
-//   for (int i = 0; i < num_args && i < 6; i++) {
-//       offset += snprintf(arg_str + offset, sizeof(arg_str) - offset,
-//                           "0x%llx ", args->args[i]);
-//   }
-//   log_message(&kernel_debug_logger, LOG_DEBUG, "    Args: %s\n", arg_str);
-// }
-
 SystemCallReturn syscall_handler(
   SystemCallNumber syscall_number,
   SystemCallArgs* args
 ) {
   SystemCallReturn result = {0};
 
-  log_message(
-    &kernel_debug_logger,
-    LOG_DEBUG,
-    "System call entered: {number=%d}\n",
-    syscall_number
-  );
+  if (DEBUG) {
+    log_message(
+      &kernel_debug_logger,
+      LOG_DEBUG,
+      "System call entered: {number=%d}\n",
+      syscall_number
+    );
+  }
 
   if (__builtin_expect(syscall_number >= SYSCALL_COUNT, 0) ||
     __builtin_expect(syscall_table[syscall_number].handler == NULL, 0)) {
-    log_message(
-      &kernel_debug_logger,
-      LOG_ERROR,
-      "  Invalid system call: No system call found\n",
-      syscall_number
-    );
+    if (DEBUG) {
+      log_message(
+        &kernel_debug_logger,
+        LOG_ERROR,
+        "  Invalid system call: No system call found\n",
+        syscall_number
+      );
+    }
+
     return (SystemCallReturn){.value = 0, .error = SYSCALL_ERROR_INVALID_SYSCALL};
   }
 
   const SystemCallEntry* entry = &syscall_table[syscall_number];
   char* formatted_args = format_syscall_args(args, entry->num_args);
 
-  log_message(
-    &kernel_debug_logger,
-    LOG_DEBUG,
-    "  Dispatching system call: {name=%s, number=%d, args={%s}}\n",
-    syscall_table[syscall_number].name,
-    syscall_number,
-    formatted_args
-  );
+  if (DEBUG) {
+    log_message(
+      &kernel_debug_logger,
+      LOG_DEBUG,
+      "  Dispatching system call: {name=%s, number=%d, args={%s}}\n",
+      syscall_table[syscall_number].name,
+      syscall_number,
+      formatted_args
+    );
+  }
 
   // Validate number of arguments
   if (syscall_table[syscall_number].num_args > 6) {
-    log_message(
-      &kernel_debug_logger,
-      LOG_ERROR,
-      "  Invalid system call: Too many arguments\n"
-    );
+    if (DEBUG) {
+      log_message(
+        &kernel_debug_logger,
+        LOG_ERROR,
+        "  Invalid system call: Too many arguments\n"
+      );
+    }
 
     return (SystemCallReturn){.value = 0, .error = SYSCALL_ERROR_INVALID_ARGS};
   }
 
   result = entry->handler(args);
 
-  log_message(
-    &kernel_debug_logger,
-    LOG_DEBUG,
-    "  System call completed: {name=%s, return=%lld, error=%d}\n",
-    syscall_table[syscall_number].name,
-    result.value,
-    result.error
-  );
+  if (DEBUG) {
+    log_message(
+      &kernel_debug_logger,
+      LOG_DEBUG,
+      "  System call completed: {name=%s, return=%lld, error=%d}\n",
+      syscall_table[syscall_number].name,
+      result.value,
+      result.error
+    );
+  }
 
   return result;
 }

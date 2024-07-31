@@ -2,7 +2,8 @@
 
 ## TODO
 
-- [ ] defines for debug and use them
+- [x] defines for debug and use them
+  - [ ] make dynamic
 - [ ] docs
   - [ ] design goals
   - [ ] building
