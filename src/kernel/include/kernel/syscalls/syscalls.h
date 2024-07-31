@@ -84,7 +84,10 @@ bool syscall_validate_args(const SystemCallArgs* args, int num_args, ...);
  * @param args The arguments passed to the system call
  * @return The return value of the system call
  */
-__attribute__((hot)) SystemCallReturn syscall_handler(SystemCallNumber syscall_number, SystemCallArgs* args);
+__attribute__((hot)) SystemCallReturn syscall_handler(
+  SystemCallNumber syscall_number,
+  SystemCallArgs* args
+);
 
 /**
  * Assembly function that calls the syscall_handler function once the syscall

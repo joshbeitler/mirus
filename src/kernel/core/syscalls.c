@@ -77,13 +77,21 @@ bool syscall_validate_args(const SystemCallArgs* args, int num_args, ...) {
   return valid;
 }
 
-SystemCallReturn syscall_handler(SystemCallNumber syscall_number, SystemCallArgs* args) {
+SystemCallReturn syscall_handler(
+  SystemCallNumber syscall_number,
+  SystemCallArgs* args
+) {
   if (__builtin_expect(syscall_number >= SYSCALL_COUNT, 0) ||
     __builtin_expect(syscall_table[syscall_number].handler == NULL, 0)) {
     return (SystemCallReturn){.value = 0, .error = SYSCALL_ERROR_INVALID_SYSCALL};
   }
 
-  log_message(&kernel_debug_logger, LOG_INFO, "System call: %s\n", syscall_table[syscall_number].name);
+  log_message(
+    &kernel_debug_logger,
+    LOG_INFO,
+    "System call: %s\n",
+    syscall_table[syscall_number].name
+  );
 
   // Validate number of arguments
   if (syscall_table[syscall_number].num_args > 6) {
