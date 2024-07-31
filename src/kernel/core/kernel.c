@@ -92,55 +92,9 @@ void _start(void) {
   log_message(&kernel_debug_logger, LOG_INFO, "Kernel initialization complete\n");
   printf_("Mirus, ahoy!\n\n");
 
-  printf_("Testing sys calls\n");
-  const char test_str[] = "Hello, Kernel World!";
-  int test_fd = 1;  // Assume 1 is stdout
-  // Create syscall arguments
-  SystemCallArgs args = {
-    .args = {test_fd, (uint64_t)test_str, sizeof(test_str) - 1, 0, 0, 0}
-  };
 
-  // Call syscall dispatcher directly
-  SystemCallReturn result = syscall_handler(SYSCALL_WRITE, &args);  // Assume 1 is the syscall number for write
-
-  // Check results
-  if (result.error == SYSCALL_SUCCESS) {
-    printf_("Write syscall test successful!\n");
-    printf_("Bytes written: %ld (expected %zu)\n", result.value, sizeof(test_str) - 1);
-  } else {
-    printf_("Write syscall test failed with error: %d\n", result.error);
-  }
-
-  // Call syscall dispatcher directly
-  SystemCallArgs args2 = {
-    .args = {0, 0, 0, 0, 0, 0}
-  };
-  SystemCallReturn result2 = syscall_handler(15, &args2);
-  printf_("hello\n");
-
-
-  // log_message(&kernel_debug_logger, LOG_INFO, "Trying exception handler\n");
-
-  // try the exception handler
-  // int a = 10;
-  // int b = 0;
-  // int c = a / b; // This will generate a Division By Zero exception
-  // // This line may not be reached; depends on how your handler reacts (e.g., halt system, log and continue)
-  // log_message(&kernel_debug_logger, LOG_INFO, "Result of division: %d\n", c);
-
-  // printf_("We're still here?\n");
-
-  // terminal_write_string("Initializing LDT...");
-  // serial_write_string("Initializing LDT...");
-  // // TODO: do the LDT stuff
-  // terminal_write_string("done\n");
-  // serial_write_string("done\n");
-
-  // terminal_write_string("Initializing IRQs...");
-  // serial_write_string("Initializing IRQs...");
-  // // TODO: do the IRQ stuff
-  // terminal_write_string("done\n");
-  // serial_write_string("done\n");
+  debug_test_exceptions();
+  // debug_test_syscalls();
 
   // We're done, just hang...
   hcf();
