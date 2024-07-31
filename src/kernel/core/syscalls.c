@@ -142,9 +142,8 @@ SystemCallReturn syscall_handler(
     log_message(
       &kernel_debug_logger,
       LOG_DEBUG,
-      "  Dispatching system call: {name=%s, number=%d, args={%s}}\n",
+      "  Dispatching system call: {name=%s, args={%s}}\n",
       syscall_table[syscall_number].name,
-      syscall_number,
       formatted_args
     );
   }
@@ -168,8 +167,7 @@ SystemCallReturn syscall_handler(
     log_message(
       &kernel_debug_logger,
       LOG_DEBUG,
-      "  System call completed: {name=%s, return=%lld, error=%d}\n",
-      syscall_table[syscall_number].name,
+      "  System call completed: {return=%lld, error=%d}\n",
       result.value,
       result.error
     );

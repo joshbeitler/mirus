@@ -15,7 +15,7 @@ void debug_test_syscalls() {
   };
 
   // Call syscall dispatcher directly
-  printf_("Trying write syscall\n");
+  printf_("  Trying write syscall\n");
   SystemCallReturn result = syscall_handler(SYSCALL_WRITE, &args);
 
   // Check results
