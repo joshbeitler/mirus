@@ -1,8 +1,8 @@
 #include <stdint.h>
 #include <stddef.h>
 
-#include <ssfn.h>
-#include <limine.h>
+#include <ssfn/ssfn.h>
+#include <limine/limine.h>
 
 #include <hal/serial.h>
 #include <libk/string.h>
