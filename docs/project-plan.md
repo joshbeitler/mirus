@@ -2,6 +2,8 @@
 
 ## TODO
 
+- [ ] code formatter?
+- [ ] .editorconfig?
 - [ ] switch to zig
   - [ ] kernel
   - [ ] libs
@@ -17,9 +19,9 @@
   - [ ] virtual memory manager/paging
 - [ ] mirus runtime
   - [ ] wasm VM
-  - [ ] syscalls
+  - [-] syscalls
   - [ ] userspace runtime library
-  - [ ] TSS
+  - [-] TSS
   - [ ] processes
   - [ ] scheduler
   - [ ] threads
