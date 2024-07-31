@@ -100,7 +100,7 @@ void _start(void) {
   };
 
   // Call syscall dispatcher directly
-  SystemCallReturn result = syscall_handler(1, &args);  // Assume 1 is the syscall number for write
+  SystemCallReturn result = syscall_handler(SYSCALL_WRITE, &args);  // Assume 1 is the syscall number for write
 
   // Check results
   if (result.error == SYSCALL_SUCCESS) {
@@ -109,6 +109,13 @@ void _start(void) {
   } else {
     printf_("Write syscall test failed with error: %d\n", result.error);
   }
+
+  // Call syscall dispatcher directly
+  SystemCallArgs args2 = {
+    .args = {0, 0, 0, 0, 0, 0}
+  };
+  SystemCallReturn result2 = syscall_handler(15, &args2);
+  printf_("hello\n");
 
 
   // log_message(&kernel_debug_logger, LOG_INFO, "Trying exception handler\n");

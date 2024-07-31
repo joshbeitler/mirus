@@ -23,5 +23,5 @@ typedef struct {
 } logger_t;
 
 // Logger API
-void log_init(logger_t *logger, log_writer_t *writers, int num_writers, log_level_t level);
+void log_init(logger_t *logger, log_writer_t *writers, int num_writers);
 void log_message(logger_t *logger, log_level_t level, const char *format, ...);

@@ -48,7 +48,7 @@ void read_memory_map(uint64_t entry_count, struct limine_memmap_entry **entries)
     const char* entry_type = get_memmap_type_string(entry->type);
     log_message(
       &kernel_debug_logger,
-      LOG_INFO,
+      LOG_DEBUG,
       "  {base=0x%016llx, length=%s, type=%s}\n",
       entry->base,
       format_memory_size(entry->length, size_buffer, sizeof(size_buffer)),

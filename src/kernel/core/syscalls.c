@@ -83,12 +83,19 @@ SystemCallReturn syscall_handler(
 ) {
   if (__builtin_expect(syscall_number >= SYSCALL_COUNT, 0) ||
     __builtin_expect(syscall_table[syscall_number].handler == NULL, 0)) {
+    // TODO: why does this not hit unless the type is LOG_INFO?
+    log_message(
+      &kernel_debug_logger,
+      LOG_ERROR,
+      "Invalid system call: %d\n",
+      syscall_number
+    );
     return (SystemCallReturn){.value = 0, .error = SYSCALL_ERROR_INVALID_SYSCALL};
   }
 
   log_message(
     &kernel_debug_logger,
-    LOG_INFO,
+    LOG_DEBUG,
     "System call: %s\n",
     syscall_table[syscall_number].name
   );
