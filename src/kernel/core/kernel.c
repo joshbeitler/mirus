@@ -19,6 +19,7 @@
 #include <kernel/debug.h>
 #include <kernel/panic.h>
 #include <kernel/syscalls.h>
+#include <kernel/stack.h>
 
 #include <drivers/terminal.h>
 
@@ -40,6 +41,10 @@ void _start(void) {
   }
   log_message(&kernel_debug_logger, LOG_INFO, "Bootloader version compatible\n");
 
+  // Find kernel stack from bootloader
+  uintptr_t kernel_stack_top = get_kernel_stack_ptr();
+  log_message(&kernel_debug_logger, LOG_INFO, "Successfully found kernel stack at {top=%p}\n", (void*)kernel_stack_top);
+
   // Ensure we got a framebuffer and fetch the first available one.
   if (framebuffer_request.response == NULL
     || framebuffer_request.response->framebuffer_count < 1) {
@@ -60,10 +65,10 @@ void _start(void) {
   // load font
   struct limine_file *default_terminal_font = limine_get_file("u_vga16.sfn");
   if (default_terminal_font == NULL) {
-    log_message(&kernel_debug_logger, LOG_FATAL, "Couldn't load default font: u_vga16.sfn\n");
+    log_message(&kernel_debug_logger, LOG_FATAL, "Couldn't load default font: {file=u_vga16.sfn}\n");
     hcf();
   }
-  log_message(&kernel_debug_logger, LOG_INFO, "Successfully loaded default font: u_vga16.sfn\n");
+  log_message(&kernel_debug_logger, LOG_INFO, "Successfully loaded default font: {u_vga16.sfn}\n");
 
   terminal_initialize(default_terminal_font, framebuffer);
   log_message(&kernel_debug_logger, LOG_INFO, "Virtual terminal initialized\n");

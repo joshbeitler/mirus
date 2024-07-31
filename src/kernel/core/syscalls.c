@@ -6,6 +6,7 @@
 #include <printf/printf.h>
 #include <libk/string.h>
 
+#include <kernel/stack.h>
 #include <kernel/syscalls.h>
 #include <kernel/debug.h>
 
@@ -179,22 +180,50 @@ SystemCallReturn syscall_handler(
 
 __attribute__((naked)) void syscall_entry() {
   asm volatile (
-    "push %%rcx\n"           // Save user RIP
-    "push %%r11\n"           // Save user RFLAGS
-    "push %%rax\n"           // Save syscall number
-    "push %%rdi\n"           // Save arg1
-    "push %%rsi\n"           // Save arg2
-    "push %%rdx\n"           // Save arg3
-    "push %%r10\n"           // Save arg4
-    "push %%r8\n"            // Save arg5
-    "push %%r9\n"            // Save arg6
-    "mov %%rsp, %%rdi\n"     // Pass stack pointer as first argument
-    "call syscall_handler\n"
-    "add $48, %%rsp\n"       // Adjust stack pointer (6 args * 8 bytes)
-    "pop %%r11\n"            // Restore user RFLAGS
-    "pop %%rcx\n"            // Restore user RIP
-    "sysretq\n"
-    : : : "memory"
+    "movq %%rsp, %%r10\n"    // Save the user stack pointer in r11 (rflags is already in r11, we'll handle that)
+    "movq %0, %%rsp\n"       // Switch to the kernel stack
+    "pushq %%r11\n"          // Save user rflags (from r11)
+    "pushq %%rcx\n"          // Save user rip (from rcx)
+    "pushq %%r10\n"          // Save user rsp (from r10)
+
+    // Save general purpose registers
+    "pushq %%rax\n"          // Save syscall number
+    "pushq %%rdi\n"          // Save arg1
+    "pushq %%rsi\n"          // Save arg2
+    "pushq %%rdx\n"          // Save arg3
+    "pushq %%r10\n"          // Save arg4 (r10 is used instead of rcx in syscalls)
+    "pushq %%r8\n"           // Save arg5
+    "pushq %%r9\n"           // Save arg6
+    "pushq %%rbx\n"          // Save rbx
+    "pushq %%rbp\n"          // Save rbp
+    "pushq %%r12\n"          // Save r12
+    "pushq %%r13\n"          // Save r13
+    "pushq %%r14\n"          // Save r14
+    "pushq %%r15\n"          // Save r15
+
+    "movq %%rsp, %%rdi\n"    // Pass the stack pointer as the first argument
+    "call syscall_handler\n" // Call the C handler
+
+    // Restore registers
+    "popq %%r15\n"           // Restore r15
+    "popq %%r14\n"           // Restore r14
+    "popq %%r13\n"           // Restore r13
+    "popq %%r12\n"           // Restore r12
+    "popq %%rbp\n"           // Restore rbp
+    "popq %%rbx\n"           // Restore rbx
+    "popq %%r9\n"            // Restore arg6
+    "popq %%r8\n"            // Restore arg5
+    "popq %%r10\n"           // Restore arg4 (r10 is used instead of rcx in syscalls)
+    "popq %%rdx\n"           // Restore arg3
+    "popq %%rsi\n"           // Restore arg2
+    "popq %%rdi\n"           // Restore arg1
+    "popq %%rax\n"           // Restore syscall number
+
+    "popq %%rsp\n"           // Restore user rsp
+    "popq %%rcx\n"           // Restore user rip into rcx
+    "popq %%r11\n"           // Restore user rflags into r11
+    "sysretq\n"              // Return to user mode
+    : : "r" (get_kernel_stack_ptr()) : "memory"
   );
 }
 

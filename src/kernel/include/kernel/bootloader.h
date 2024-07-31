@@ -38,6 +38,19 @@ static volatile struct limine_memmap_request memory_map_request = {
   .revision = 0
 };
 
+/**
+ * Get stack size from Limine
+ *
+ * TODO: We won't need this once we have a proper stack (depends on memory
+ *       manager)
+ */
+__attribute__((used, section(".requests")))
+static volatile struct limine_stack_size_request stack_size_request = {
+  .id = LIMINE_STACK_SIZE_REQUEST,
+  .revision = 0,
+  .stack_size = 16384 // 16 KiB
+};
+
 __attribute__((used, section(".requests_start_marker")))
 static volatile LIMINE_REQUESTS_START_MARKER;
 
