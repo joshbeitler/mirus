@@ -1,5 +1,23 @@
 # Mirus OS project plan
 
+## NEXT
+
+We are ready to jump to user mode, but we now need to implement memory
+management and a few other things before we can do that. Once that is done, we
+can start on implementing the managed runtime, which is where we will jump to.
+
+- [ ] memory management
+  - [ ] physical memory manager
+  - [ ] kmalloc / kfree
+  - [ ] virtual memory manager/paging
+- [ ] mirus runtime
+  - [ ] wasm VM
+  - [-] syscalls
+  - [ ] userspace runtime library
+  - [x] TSS
+  - [ ] processes
+- [ ] example userspace program compile as wasm and bundle with kernel for testing
+
 ## TODO
 
 - [x] defines for debug and use them
@@ -21,20 +39,6 @@
     - [ ] limine
   - [ ] hal
   - [ ] build system
-- [ ] memory management
-  - [ ] physical memory manager
-  - [ ] kmalloc / kfree
-  - [ ] virtual memory manager/paging
-- [ ] mirus runtime
-  - [ ] wasm VM
-  - [-] syscalls
-  - [ ] userspace runtime library
-  - [-] TSS
-  - [ ] processes
-  - [ ] scheduler
-  - [ ] threads
-  - [ ] pre-emptive multitasking
-  - [ ] port libc
 - [ ] servers
   - [ ] display compositor/window manager
     - [ ] framebuffer in userspace
@@ -49,3 +53,7 @@
   - [ ] irq
   - [ ] object manager?
   - [ ] clock and timers
+- [ ] pre-emptive multitasking
+- [ ] port libc
+- [ ] threads
+- [ ] scheduler
