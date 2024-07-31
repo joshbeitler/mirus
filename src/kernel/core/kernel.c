@@ -92,10 +92,6 @@ void _start(void) {
   log_message(&kernel_debug_logger, LOG_INFO, "Kernel initialization complete\n");
   printf_("Mirus, ahoy!\n\n");
 
-
-  debug_test_exceptions();
-  // debug_test_syscalls();
-
   // We're done, just hang...
   hcf();
 }
