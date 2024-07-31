@@ -2,8 +2,40 @@
 
 ## TODO
 
-### Meta
-
-### Kernel
-
-### Apps/Utils
+- [ ] switch to zig
+  - [ ] kernel
+  - [ ] libs
+    - [ ] printf (do we need this with zig?)
+    - [ ] libk
+    - [ ] ssfn
+    - [ ] limine
+  - [ ] hal
+  - [ ] build system
+- [ ] memory management
+  - [ ] physical memory manager
+  - [ ] kmalloc / kfree
+  - [ ] virtual memory manager/paging
+- [ ] mirus runtime
+  - [ ] wasm VM
+  - [ ] syscalls
+  - [ ] userspace runtime library
+  - [ ] TSS
+  - [ ] processes
+  - [ ] scheduler
+  - [ ] threads
+  - [ ] pre-emptive multitasking
+  - [ ] port libc
+- [ ] servers
+  - [ ] display compositor/window manager
+    - [ ] framebuffer in userspace
+  - [ ] filesystem
+  - [ ] disk drivers
+  - [ ] network drivers
+  - [ ] simple USB implementation
+  - [ ] keyboard driver
+  - [ ] mouse driver
+- [ ] misc
+  - [ ] AIPC
+  - [ ] irq
+  - [ ] object manager?
+  - [ ] clock and timers
