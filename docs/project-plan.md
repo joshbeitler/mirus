@@ -2,6 +2,13 @@
 
 ## TODO
 
+- [ ] defines for debug and use them
+- [ ] docs
+  - [ ] design goals
+  - [ ] building
+  - [ ] debugging
+  - [ ] managed userspace white paper
+  - [ ] system call interface
 - [ ] code formatter?
 - [ ] .editorconfig?
 - [ ] switch to zig

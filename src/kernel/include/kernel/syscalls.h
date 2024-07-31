@@ -45,7 +45,7 @@ typedef enum {
   ARG_UINT,
   ARG_PTR,
   ARG_SIZE,
-} SyscallArgType;
+} SystemCallArgType;
 
 /**
  * Allows system calls to return a value and an error code simultaneously.
@@ -71,6 +71,11 @@ typedef struct {
   const char* name;
   uint8_t num_args;
 } SystemCallEntry;
+
+/**
+ * Helper function used during debug logging to format system call arguments
+ */
+static char* format_syscall_args(const SystemCallArgs* args, int num_args);
 
 /**
  * Validates the types of arguments passed to a system call
