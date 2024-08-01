@@ -9,7 +9,6 @@
 #include <kernel/paging.h>
 #include <kernel/debug.h>
 
-
 /**
  * Internal helper variables
  */
@@ -138,6 +137,16 @@ void pmm_initialize(
 
   // Calculate total frames
   total_frames = total_memory / PAGE_SIZE;
+
+  // Memory mapping:
+
+  // 1. When the buddy allocator is initialized, it starts by viewing the entire manageable memory space as being composed of the largest possible free blocks (highest order).
+
+  // 2. In a real OS, you'd typically have a memory map (often provided by the bootloader) that tells you which regions of physical memory are usable.
+  // The physical memory manager would use this map to initialize the buddy allocator, marking unusable regions (like those reserved for hardware) as allocated from the start.
+
+  // 3. During initialization, the allocator marks all the highest-order blocks that fit within the physical memory as free.
+  // Any remaining memory that's smaller than the highest-order block size is handled as the next lower order, and so on, until all memory is accounted for.
 
   if (DEBUG) {
     log_message(

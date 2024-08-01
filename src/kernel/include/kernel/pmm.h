@@ -47,7 +47,7 @@ void pmm_initialize(
   struct limine_kernel_file_response *kernel_file_response
 );
 
-#define MAX_ORDER 11  // Assuming max block size of 4MB (2^11 * 4096 (page size) = 4MB)
+#define MAX_ORDER 11
 
 /**
  * Allocate a block of physical memory. We use a buddy allocator to manage
