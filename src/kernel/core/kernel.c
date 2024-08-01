@@ -16,7 +16,7 @@
 
 #include <kernel/bootloader.h>
 #include <kernel/interrupts.h>
-#include <kernel/memory.h>
+#include <kernel/pmm.h>
 #include <kernel/debug.h>
 #include <kernel/panic.h>
 #include <kernel/syscalls.h>
