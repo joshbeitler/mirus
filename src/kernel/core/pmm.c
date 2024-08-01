@@ -45,6 +45,7 @@ static int find_first_set(uint64_t *bitmap, int size) {
       return i * 64 + __builtin_ffs(bitmap[i]);
     }
   }
+
   return -1;  // No set bit found
 }
 
@@ -98,6 +99,15 @@ void pmm_initialize(
   // Round up kernel_end to the next page boundary
   kernel_end = (kernel_end + PAGE_SIZE - 1) & ~(PAGE_SIZE - 1);
 
+  if (DEBUG) {
+    log_message(
+      &kernel_debug_logger,
+      LOG_INFO,
+      "  Reading memory map\n",
+      format_memory_size(total_memory, size_buffer, sizeof(size_buffer))
+    );
+  }
+
   // Process each entry
   for (size_t i = 0; i < entry_count; i++) {
     // entry->base is the base address of this memory region
@@ -111,7 +121,7 @@ void pmm_initialize(
       log_message(
         &kernel_debug_logger,
         LOG_DEBUG,
-        "  {base=0x%016llx, length=%s, type=%s}\n",
+        "    {base=0x%016llx, length=%s, type=%s}\n",
         entry->base,
         format_memory_size(entry->length, size_buffer, sizeof(size_buffer)),
         entry_type
@@ -133,28 +143,28 @@ void pmm_initialize(
     log_message(
       &kernel_debug_logger,
       LOG_INFO,
-      "Total system memory: %s\n",
+      "  Total system memory: %s\n",
       format_memory_size(total_memory, size_buffer, sizeof(size_buffer))
     );
 
     log_message(
       &kernel_debug_logger,
       LOG_INFO,
-      "Usable system memory: %s\n",
+      "  Usable system memory: %s\n",
       format_memory_size(usable_memory, size_buffer, sizeof(size_buffer))
     );
 
     log_message(
       &kernel_debug_logger,
       LOG_INFO,
-      "Kernel address: %p\n",
+      "  Kernel address: %p\n",
       kernel_start
     );
 
     log_message(
       &kernel_debug_logger,
       LOG_INFO,
-      "Kernel size: %s\n",
+      "  Kernel size: %s\n",
       format_memory_size(kernel_size, size_buffer, sizeof(size_buffer))
     );
   }

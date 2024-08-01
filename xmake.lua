@@ -45,8 +45,6 @@ includes("src/libs/logger")
 includes("src/libs/printf")
 includes("src/kernel")
 
-includes("src/apps/hello")
-
 task("make-iso")
     set_category("build")
     on_run(function ()
@@ -62,10 +60,6 @@ task("make-iso")
             raise("Kernel target not found!")
         end
         local kernel_path = kernel_target:targetfile()
-
-        local hello_target = project.target("hello")
-        local hello_path = hello_target:targetfile()
-        hello_path = path.join(path.directory(hello_path), mode, path.filename(hello_path))
 
         if not os.isfile(kernel_path) then
             kernel_path = path.join(path.directory(kernel_path), mode, path.filename(kernel_path))
@@ -95,7 +89,6 @@ task("make-iso")
         -- Copy files
         os.cp("meta/*.sfn", iso_root)
         os.cp(kernel_path, path.join(iso_root, "boot"))
-        os.cp(hello_path, path.join(iso_root))
         os.cp("meta/limine.cfg", path.join(iso_root, "boot/limine"))
         os.cp(path.join(limine_dir, "limine-bios.sys"), path.join(iso_root, "boot/limine"))
         os.cp(path.join(limine_dir, "limine-bios-cd.bin"), path.join(iso_root, "boot/limine"))
