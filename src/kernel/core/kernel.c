@@ -25,13 +25,6 @@
 
 #include <drivers/terminal.h>
 
-
-// don't look
-// #define USER_CODE_ADDRESS 0x400000
-// #define USER_STACK_SIZE (16 * 1024)
-// #define USER_STACK_ADDRESS 0x7FFFFFFFE000  // Near the top of user space
-// static uint8_t user_stack_buffer[USER_STACK_SIZE] __attribute__((aligned(16)));
-
 /**
  * Kernel entry point
  */
@@ -71,7 +64,23 @@ void _start(void) {
   }
   log_message(&kernel_debug_logger, LOG_INFO, "Successfully loaded memory map\n");
 
-  // load font
+  // Ensure we got the kernel location
+  if (kernel_address_request.response == NULL
+    || kernel_address_request.response->virtual_base == 0) {
+    log_message(&kernel_debug_logger, LOG_FATAL, "Couldn't get kernel location\n");
+    hcf();
+  }
+  log_message(&kernel_debug_logger, LOG_INFO, "Successfully found kernel location\n");
+
+  // Ensure we got the kernel file
+  if (kernel_file_request.response == NULL
+    || kernel_file_request.response->kernel_file == NULL) {
+    log_message(&kernel_debug_logger, LOG_FATAL, "Couldn't get kernel file\n");
+    hcf();
+  }
+  log_message(&kernel_debug_logger, LOG_INFO, "Successfully found kernel file\n");
+
+  // Load default bitmap font
   struct limine_file *default_terminal_font = limine_get_file("u_vga16.sfn");
   if (default_terminal_font == NULL) {
     log_message(&kernel_debug_logger, LOG_FATAL, "Couldn't load default font: {file=u_vga16.sfn}\n");
@@ -79,78 +88,47 @@ void _start(void) {
   }
   log_message(&kernel_debug_logger, LOG_INFO, "Successfully loaded default font: {file=u_vga16.sfn}\n");
 
+  // Set up terminal
   terminal_initialize(default_terminal_font, framebuffer);
   log_message(&kernel_debug_logger, LOG_INFO, "Virtual terminal initialized\n");
 
+  // Set up the GDT and TSS
   log_message(&kernel_debug_logger, LOG_INFO, "Starting GDT initialization\n");
   gdt_initialize(kernel_stack_top);
   log_message(&kernel_debug_logger, LOG_INFO, "Successfully initialized GDT\n");
 
+  // Set up the IDT
   log_message(&kernel_debug_logger, LOG_INFO, "Starting IDT initialization\n");
   idt_initialize();
   log_message(&kernel_debug_logger, LOG_INFO, "Successfully initialized IDT\n");
 
+  // Load the IDT with handlers
   log_message(&kernel_debug_logger, LOG_INFO, "Starting ISR initialization\n");
   isr_initialize();
   log_message(&kernel_debug_logger, LOG_INFO, "Successfully initialized ISRs\n");
 
-  // Look at memory map
-  // do somthing with the entries. we will move this somewhere else
+  // Read the memory map and initialize the physical memory manager with it
   log_message(&kernel_debug_logger, LOG_INFO, "Starting physical memory manager initialization\n");
-  read_memory_map(memory_map_request.response->entry_count, memory_map_request.response->entries, kernel_address_request.response, kernel_file_request.response);
-  init_page_allocator();
+  pmm_initialize(
+    memory_map_request.response->entry_count,
+    memory_map_request.response->entries,
+    kernel_address_request.response,
+    kernel_file_request.response
+  );
+  // TODO: Initialize paging
   log_message(&kernel_debug_logger, LOG_INFO, "Successfully initialized physical memory manager\n");
 
-
-
-
-
+  // Set up system calls
   log_message(&kernel_debug_logger, LOG_INFO, "Starting system call initialization\n");
   syscalls_initialize();
   log_message(&kernel_debug_logger, LOG_INFO, "Successfully initialized system calls\n");
 
+  // We're done! Let the user know
+  // TODO: This will eventually be replaced with a userspace jump to the
+  //       init process.
   log_message(&kernel_debug_logger, LOG_INFO, "Kernel initialization complete\n");
   printf_("Mirus, ahoy!\n\n");
 
-  // debug_test_syscalls();
-  // try to load hello program into memory, get its address, and jump to it
-  #define USER_STACK_ADDR 0x7FFFFFFFE000  // Example user stack address
-  #define USER_PROGRAM_ADDR 0x400000      // Example user program load address
-  #define PAGE_SIZE 4096
-  #define USER_CS 0x23  // User mode code segment
-  #define USER_SS 0x1B  // User mode stack segment
-  #define USER_RFLAGS 0x202  // User mode RFLAGS (IF set)
-
-
-
-
-  struct limine_file *hello_world = limine_get_file("hello");
-  uintptr_t stack_phys = allocate_page();
-
-  map_page(USER_STACK_ADDR, stack_phys, 0x7);
-  // // void* user_stack_top = (char*)user_stack + USER_STACK_SIZE;
-  // // void* entry_point = hello_world->address;
-
-  // size_t program_size = hello_world->size;
-  //     size_t pages_needed = (program_size + PAGE_SIZE - 1) / PAGE_SIZE;
-
-  //     for (size_t i = 0; i < pages_needed; i++) {
-  //         uintptr_t prog_phys = allocate_page();
-  //         if (prog_phys == 0) {
-  //             // Handle allocation failure
-  //             return;
-  //         }
-
-  //         // Map the program page with user-mode permissions (read/execute, user-accessible)
-  //         map_page(USER_PROGRAM_ADDR + i * PAGE_SIZE, prog_phys, 0x5);  // 0x5 = Present | User | Execute
-  //     }
-
-  //     // 4. Copy the program to user memory
-  //     memcpy((void*)USER_PROGRAM_ADDR, hello_world->address, program_size);
-
-  //     jump_to_usermode((void*)USER_PROGRAM_ADDR, (void*)USER_STACK_ADDR);
-
-
-  // We're done, just hang...
+  // If we got here, just chill. Halt the CPU.
   hcf();
 }
