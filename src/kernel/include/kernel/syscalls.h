@@ -75,7 +75,7 @@ typedef struct {
 /**
  * Helper function used during debug logging to format system call arguments
  */
-static char* format_syscall_args(const SystemCallArgs* args, int num_args);
+char* format_syscall_args(const SystemCallArgs* args, int num_args);
 
 /**
  * Validates the types of arguments passed to a system call

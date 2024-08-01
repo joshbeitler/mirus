@@ -69,7 +69,7 @@ GdtSegmentDescriptor gdt_create_segment_descriptor(
 /**
  * Initializes the GDT for 64-bit long mode
 */
-void gdt_initialize();
+void gdt_initialize(uintptr_t kernel_stack_ptr);
 
 /**
  * Calls the LGDT instruction with the given GDTR

@@ -62,7 +62,7 @@ static const SystemCallEntry syscall_table[SYSCALL_COUNT] = {
 // TODO: Not thread safe due to static buffer
 // TODO: Treats all argument types as hexedecimal. Add special conditions for
 //       other types.
-static char* format_syscall_args(const SystemCallArgs* args, int num_args) {
+char* format_syscall_args(const SystemCallArgs* args, int num_args) {
   static char arg_str[256];
   memset(arg_str, 0, sizeof(arg_str));
 
