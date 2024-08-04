@@ -4,6 +4,9 @@
 
 #include <printf/printf.h>
 #include <limine/limine.h>
+#include <libk/string.h>
+
+#include <hal/serial.h>
 
 #include <kernel/pmm.h>
 #include <kernel/paging.h>
@@ -162,6 +165,9 @@ void pmm_initialize(
   // Calculate total frames
   total_frames = total_memory / PAGE_SIZE;
 
+  // The bitmap needs to be initialized to all 1s (all memory is free)
+  memset(bitmap, 0xFF, sizeof(bitmap));
+
   // Memory mapping:
 
   // 1. When the buddy allocator is initialized, it starts by viewing the entire manageable memory space as being composed of the largest possible free blocks (highest order).
@@ -220,5 +226,40 @@ size_t pmm_get_free_memory() {
 }
 
 void pmm_debug_print_state() {
+  char buffer[64];
+  log_message(&kernel_debug_logger, LOG_DEBUG, "Buddy bitmap state:\n");
 
+  for (int order = 0; order < MAX_ORDER; order++) {
+    int bits_per_order = 1 << (MAX_ORDER - order);
+    int words_per_order = 1 + (bits_per_order - 1) / 64;
+
+    log_message(
+      &kernel_debug_logger,
+      LOG_DEBUG,
+      "  {order=%d, pages=%d units, granularity: %lu bytes}\n",
+      order,
+      1 << order,
+      (unsigned long)PAGE_SIZE * (1 << order)
+    );
+
+    for (int word = 0; word < words_per_order; word++) {
+      uint64_t bitmap_word = bitmap[order][word];
+      int bits_in_word = (word == words_per_order - 1 && bits_per_order % 64 != 0) ? bits_per_order % 64 : 64;
+
+      sprintf_(buffer, "[DEBUG]       {word=%02d: ", word);
+      serial_write_string(buffer);
+
+      for (int bit = 0; bit < bits_in_word; bit++) {
+        char status = (bitmap_word & (1ULL << bit)) ? '1' : '0';
+        sprintf_(buffer, "%c", status);
+        serial_write_string(buffer);
+
+        if ((bit + 1) % 8 == 0) {
+          serial_write_string(" ");
+        }
+      }
+
+      serial_write_string("\b}\n");
+    }
+  }
 }

@@ -129,6 +129,9 @@ void _start(void) {
   log_message(&kernel_debug_logger, LOG_INFO, "Kernel initialization complete\n");
   printf_("Mirus, ahoy!\n\n");
 
+  // test the pmm
+  pmm_debug_print_state();
+
   // If we got here, just chill. Halt the CPU.
   hcf();
 }
