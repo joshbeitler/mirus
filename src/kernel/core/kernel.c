@@ -130,12 +130,7 @@ void _start(void) {
   printf_("Mirus, ahoy!\n\n");
 
   // test the pmm
-  pmm_debug_print_state(); // print initial state
-  uintptr_t test_addr = pmm_alloc(4000); // allocate a page (4096 bytes)
-  uintptr_t test_add2 = pmm_alloc(4000); // allocate another page (4096 bytes)
-  uintptr_t test_add3 = pmm_alloc(4000); // allocate another page (4096 bytes)
-  // pmm_free(test_addr, 4000); // free the page
-  pmm_debug_print_state(); // print state after allocation
+  debug_test_buddy_allocator();
 
   // If we got here, just chill. Halt the CPU.
   hcf();

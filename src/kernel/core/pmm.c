@@ -306,13 +306,13 @@ uintptr_t pmm_alloc(size_t size) {
     log_message(
       &kernel_debug_logger,
       LOG_DEBUG,
-      "PMM: Requested %d bytes\n",
-      size
+      "PMM: Allocating %zu bytes (order %d)\n",
+      size,
+      order
     );
   }
 
   if (bit == -1) {
-    // No free block available
     if (DEBUG) {
       log_message(
         &kernel_debug_logger,
@@ -328,52 +328,102 @@ uintptr_t pmm_alloc(size_t size) {
   if (DEBUG) {
     log_message(
       &kernel_debug_logger,
-      LOG_ERROR,
+      LOG_DEBUG,
       "  Free block found at bit %d for order: %d\n",
       bit,
       order
     );
   }
 
-  // Split blocks if necessary
-  if (order < MAX_ORDER) {
-    split_block(order, bit);
+  // Split larger blocks if necessary
+  for (int i = MAX_ORDER; i > order; i--) {
+    if (test_bit(bitmap[i], bit >> (i - order))) {
+      clear_bit(bitmap[i], bit >> (i - order));
+      set_bit(bitmap[i-1], (bit >> (i - order - 1)) ^ 1);
+    }
   }
 
-  // Mark the block as used
-  mark_block_used(order, bit);
+  // Mark the allocated block as used
+  clear_bit(bitmap[order], bit);
 
   // Calculate the physical address
-  uintptr_t address = bit << (PAGE_SHIFT + order);
+  uintptr_t address = (uintptr_t)bit << (PAGE_SHIFT + order);
 
   if (DEBUG) {
     log_message(
       &kernel_debug_logger,
       LOG_DEBUG,
-      "  Allocated %d bytes (requested: %d bytes) at 0x%016lx\n",
-      round_to_nearest_pow2(size),
+      "  Allocated %zu bytes (requested: %zu bytes) at 0x%016lx\n",
+      (size_t)1 << (PAGE_SHIFT + order),
       size,
-      (void*)address
+      address
     );
   }
 
   return address;
 }
 
-void pmm_free(uintptr_t addr, size_t size) {
-  size_t rounded_size = round_to_nearest_pow2(size);
-
+void pmm_free(uintptr_t address, size_t size) {
   if (DEBUG) {
     log_message(
       &kernel_debug_logger,
       LOG_DEBUG,
-      "PMM: Freeing %d bytes at %p (requested: %d bytes)\n",
-      rounded_size,
-      addr,
-      size
+      "PMM: Freeing %zu bytes at address 0x%016lx\n",
+      size,
+      address
     );
   }
 
+  // Calculate the order of the block being freed
+  int order = get_order(size);
+
+  // Calculate the bit index in the bitmap
+  int bit = (address >> (PAGE_SHIFT + order));
+
+  while (order <= MAX_ORDER) {
+    // Set this bit as free
+    set_bit(bitmap[order], bit);
+
+    if (DEBUG) {
+      log_message(
+        &kernel_debug_logger,
+        LOG_DEBUG,
+        "  Freed block at bit %d for order %d\n",
+        bit,
+        order
+      );
+    }
+
+    // If we're at the highest order or if the buddy is not free, we're done
+    if (order == MAX_ORDER || !test_bit(bitmap[order], bit ^ 1)) {
+      return;
+    }
+
+    // If we're here, we can merge with the buddy
+    if (DEBUG) {
+      log_message(
+        &kernel_debug_logger,
+        LOG_DEBUG,
+        "  Merging blocks at bits %d and %d for order %d\n",
+        bit,
+        bit ^ 1,
+        order
+      );
+    }
+
+    // Move to the next order
+    bit >>= 1;
+    order++;
+  }
+
+  // We should never reach here, but if we do, it's an error
+  if (DEBUG) {
+    log_message(
+      &kernel_debug_logger,
+      LOG_ERROR,
+      "PMM: Error in pmm_free - reached end of function unexpectedly\n"
+    );
+  }
 }
 
 size_t pmm_get_total_memory() {

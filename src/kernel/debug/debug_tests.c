@@ -2,6 +2,7 @@
 
 #include <kernel/debug.h>
 #include <kernel/syscalls.h>
+#include <kernel/pmm.h>
 
 void debug_test_syscalls() {
   printf_("Running system calls test\n");
@@ -48,4 +49,43 @@ void debug_test_exceptions() {
 
   log_message(&kernel_debug_logger, LOG_DEBUG, "Result of division: %d\n", c);
   printf_("Are we still here?\n");
+}
+
+void debug_test_buddy_allocator() {
+  printf_("Starting complex PMM test...\n");
+
+  printf_("Initial state:\n");
+  pmm_debug_print_state();
+
+  // Allocate blocks of various sizes
+  uintptr_t block1 = pmm_alloc(4096);    // 4 KiB (Order 0)
+  uintptr_t block2 = pmm_alloc(8192);    // 8 KiB (Order 1)
+  uintptr_t block3 = pmm_alloc(16384);   // 16 KiB (Order 2)
+  uintptr_t block4 = pmm_alloc(65536);   // 64 KiB (Order 4)
+  uintptr_t block5 = pmm_alloc(131072);  // 128 KiB (Order 5)
+
+  // Free blocks in a specific order to test merging
+  pmm_free(block2, 8192);
+
+  pmm_free(block4, 65536);
+
+  // Allocate a block that should fit in the hole left by block4
+  uintptr_t block6 = pmm_alloc(32768);   // 32 KiB (Order 3)
+
+  // Free more blocks
+  pmm_free(block1, 4096);
+  pmm_free(block3, 16384);
+
+  // Allocate a large block
+  uintptr_t block7 = pmm_alloc(262144);  // 256 KiB (Order 6)
+
+  // Free remaining blocks
+  pmm_free(block5, 131072);
+  pmm_free(block6, 32768);
+  pmm_free(block7, 262144);
+
+  printf_("Final state:\n");
+  pmm_debug_print_state();
+
+  printf_("Complex PMM test completed.\n");
 }
