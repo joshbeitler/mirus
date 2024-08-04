@@ -10,6 +10,22 @@
 #include <kernel/debug.h>
 
 /**
+ * Human-readable names for memory map entry types
+ */
+static const char* const memmap_type_strings[] = {
+  "Usable",
+  "Reserved",
+  "ACPI Reclaimable",
+  "ACPI NVS",
+  "Bad Memory",
+  "Bootloader Reclaimable",
+  "Kernel and Modules",
+  "Framebuffer"
+};
+
+#define MEMMAP_TYPE_COUNT (sizeof(memmap_type_strings) / sizeof(memmap_type_strings[0]))
+
+/**
  * Internal helper variables
  */
 static uintptr_t kernel_start, kernel_end;
@@ -62,7 +78,15 @@ static const char* get_memmap_type_string(uint64_t type) {
   return "Unknown";
 }
 
-char* format_memory_size(uint64_t size, char* buffer, size_t buffer_size) {
+/**
+ * Utility function that formats a memory size as a human-readable string
+ *
+ * @param size Size in bytes
+ * @param buffer Buffer to write the formatted string to
+ * @param buffer_size Size of the buffer
+ * @return Pointer to the buffer
+ */
+static char* format_memory_size(uint64_t size, char* buffer, size_t buffer_size) {
   uint64_t kib = size / 1024;
   uint64_t mib = kib / 1024;
   uint64_t gib = mib / 1024;
