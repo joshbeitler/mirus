@@ -25,13 +25,19 @@ void pmm_initialize(
 
 /**
  * Allocate a block of physical memory. We use a buddy allocator to manage
-  * physical memory.
+ * physical memory.
+ *
+ * @param size Size of the block to allocate
+ * @return The physical address of the allocated block
  */
 uintptr_t pmm_alloc(size_t size);
 
 /**
  * Free a previously allocated block of physical memory. We use a buddy
-  * allocator to manage physical memory.
+ * allocator to manage physical memory.
+ *
+ * @param addr Physical address of the block to free
+ * @param size Size of the block to free
  */
 void pmm_free(uintptr_t addr, size_t size);
 

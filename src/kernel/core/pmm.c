@@ -49,6 +49,9 @@ static uint64_t bitmap[MAX_ORDER + 1][1 + (1 << MAX_ORDER) / 64];
 
 /**
  * Utility function to set a bit in the memory map
+ *
+ * @param bitmap The bitmap to modify
+ * @param bit The bit to set
  */
 static void set_bit(uint64_t *bitmap, int bit) {
   bitmap[bit / 64] |= (1ULL << (bit % 64));
@@ -56,6 +59,9 @@ static void set_bit(uint64_t *bitmap, int bit) {
 
 /**
  * Utility function to clear a bit in the memory map
+ *
+ * @param bitmap The bitmap to modify
+ * @param bit The bit to clear
  */
 static void clear_bit(uint64_t *bitmap, int bit) {
   bitmap[bit / 64] &= ~(1ULL << (bit % 64));
@@ -63,6 +69,9 @@ static void clear_bit(uint64_t *bitmap, int bit) {
 
 /**
  * Utility function to check a bit in the memory map
+ *
+ * @param bitmap The bitmap to modify
+ * @param bit The bit to check
  */
 static int test_bit(uint64_t *bitmap, int bit) {
   return (bitmap[bit / 64] & (1ULL << (bit % 64))) != 0;
@@ -70,8 +79,12 @@ static int test_bit(uint64_t *bitmap, int bit) {
 
 /**
  * Finds first set bit in the bitmap. This allows us to use 1s to represent
-  * free pages and 0s to represent used pages, and therefore we can find the
-  * first free page by finding the first set bit super quickly with ffs.
+ * free pages and 0s to represent used pages, and therefore we can find the
+ * first free page by finding the first set bit super quickly with ffs.
+ *
+ * @param bitmap The bitmap to search
+ * @param size The size of the bitmap in 64-bit words
+ * @return The index of the first set bit, or -1 if no set bit is found
  */
 static int find_first_set(uint64_t *bitmap, int size) {
   for (int i = 0; i < size; i++) {
@@ -86,6 +99,9 @@ static int find_first_set(uint64_t *bitmap, int size) {
 
 /**
  * Utility function to split a block into smaller blocks (creates buddies)
+ *
+ * @param order The order of the block to split
+ * @param bit The bit of the block to split
  */
 static void split_block(int order, int bit) {
   for (int i = order; i > 0; i--) {
@@ -96,6 +112,9 @@ static void split_block(int order, int bit) {
 
 /**
  * Utility function to marka a block as used
+ *
+ * @param order The order of the block to mark as used
+ * @param bit The bit of the block to mark as used
  */
 static void mark_block_used(int order, int bit) {
   clear_bit(bitmap[order], bit);
@@ -103,6 +122,9 @@ static void mark_block_used(int order, int bit) {
 
 /**
  * Utility function to find which order a given size will fit into
+ *
+ * @param size The size to find the order for
+ * @return The order that the size fits into
  */
 static int get_order(size_t size) {
   int order = 0;
@@ -118,6 +140,9 @@ static int get_order(size_t size) {
 
 /**
  * Utility function to find the first usable free block in a given order
+ *
+ * @param order The order of the block to find
+ * @return The bit of the first free block, or -1 if no free block is found
  */
 static int find_free_block(int order) {
   for (int i = order; i <= MAX_ORDER; i++) {
