@@ -5,6 +5,7 @@
 #include <printf/printf.h>
 #include <limine/limine.h>
 #include <libk/string.h>
+#include <libk/math.h>
 
 #include <hal/serial.h>
 
@@ -27,6 +28,7 @@ static const char* const memmap_type_strings[] = {
 };
 
 #define MEMMAP_TYPE_COUNT (sizeof(memmap_type_strings) / sizeof(memmap_type_strings[0]))
+#define STATUS_WIDTH 72
 
 /**
  * Internal helper variables
@@ -42,29 +44,91 @@ static uint64_t total_frames;
  * Each bit in the uint64_t represents the availability of a page,
  * 1 = free, 0 = used.
  */
-static uint64_t bitmap[MAX_ORDER][1 + (1 << MAX_ORDER) / 64];
+static uint64_t bitmap[MAX_ORDER + 1][1 + (1 << MAX_ORDER) / 64];
+#define PAGE_SHIFT 12 // Derived from PAGE_SIZE
 
+/**
+ * Utility function to set a bit in the memory map
+ */
 static void set_bit(uint64_t *bitmap, int bit) {
   bitmap[bit / 64] |= (1ULL << (bit % 64));
 }
 
+/**
+ * Utility function to clear a bit in the memory map
+ */
 static void clear_bit(uint64_t *bitmap, int bit) {
   bitmap[bit / 64] &= ~(1ULL << (bit % 64));
 }
 
+/**
+ * Utility function to check a bit in the memory map
+ */
 static int test_bit(uint64_t *bitmap, int bit) {
   return (bitmap[bit / 64] & (1ULL << (bit % 64))) != 0;
 }
 
-// Find first set bit in the bitmap
+/**
+ * Finds first set bit in the bitmap. This allows us to use 1s to represent
+  * free pages and 0s to represent used pages, and therefore we can find the
+  * first free page by finding the first set bit super quickly with ffs.
+ */
 static int find_first_set(uint64_t *bitmap, int size) {
   for (int i = 0; i < size; i++) {
     if (bitmap[i] != 0) {
-      return i * 64 + __builtin_ffs(bitmap[i]);
+      // Uses builtin ffs function to find the first set bit super quickly
+      return i * 64 + __builtin_ffsll(bitmap[i]) - 1;
     }
   }
 
   return -1;  // No set bit found
+}
+
+/**
+ * Utility function to split a block into smaller blocks (creates buddies)
+ */
+static void split_block(int order, int bit) {
+  for (int i = order; i > 0; i--) {
+    int buddy_bit = bit ^ (1 << (i - 1));
+    set_bit(bitmap[i - 1], buddy_bit);
+  }
+}
+
+/**
+ * Utility function to marka a block as used
+ */
+static void mark_block_used(int order, int bit) {
+  clear_bit(bitmap[order], bit);
+}
+
+/**
+ * Utility function to find which order a given size will fit into
+ */
+static int get_order(size_t size) {
+  int order = 0;
+  size = (size - 1) >> PAGE_SHIFT;
+
+  while (size > 0) {
+    order++;
+    size >>= 1;
+  }
+
+  return order;
+}
+
+/**
+ * Utility function to find the first usable free block in a given order
+ */
+static int find_free_block(int order) {
+  for (int i = order; i <= MAX_ORDER; i++) {
+    int bit = find_first_set(bitmap[i], 1 + (1 << MAX_ORDER) / 64);
+
+    if (bit != -1) {
+      return bit;
+    }
+  }
+
+  return -1;
 }
 
 /**
@@ -210,10 +274,80 @@ void pmm_initialize(
 }
 
 uintptr_t pmm_alloc(size_t size) {
+  int order = get_order(size);
+  int bit = find_free_block(order);
 
+  if (DEBUG) {
+    log_message(
+      &kernel_debug_logger,
+      LOG_DEBUG,
+      "PMM: Requested %d bytes\n",
+      size
+    );
+  }
+
+  if (bit == -1) {
+    // No free block available
+    if (DEBUG) {
+      log_message(
+        &kernel_debug_logger,
+        LOG_ERROR,
+        "  No free block found for order: %d\n",
+        order
+      );
+    }
+
+    return (uintptr_t)NULL;
+  }
+
+  if (DEBUG) {
+    log_message(
+      &kernel_debug_logger,
+      LOG_ERROR,
+      "  Free block found at bit %d for order: %d\n",
+      bit,
+      order
+    );
+  }
+
+  // Split blocks if necessary
+  if (order < MAX_ORDER) {
+    split_block(order, bit);
+  }
+
+  // Mark the block as used
+  mark_block_used(order, bit);
+
+  // Calculate the physical address
+  uintptr_t address = bit << (PAGE_SHIFT + order);
+
+  if (DEBUG) {
+    log_message(
+      &kernel_debug_logger,
+      LOG_DEBUG,
+      "  Allocated %d bytes (requested: %d bytes) at 0x%016lx\n",
+      round_to_nearest_pow2(size),
+      size,
+      (void*)address
+    );
+  }
+
+  return address;
 }
 
 void pmm_free(uintptr_t addr, size_t size) {
+  size_t rounded_size = round_to_nearest_pow2(size);
+
+  if (DEBUG) {
+    log_message(
+      &kernel_debug_logger,
+      LOG_DEBUG,
+      "PMM: Freeing %d bytes at %p (requested: %d bytes)\n",
+      rounded_size,
+      addr,
+      size
+    );
+  }
 
 }
 
@@ -227,39 +361,71 @@ size_t pmm_get_free_memory() {
 
 void pmm_debug_print_state() {
   char buffer[64];
-  log_message(&kernel_debug_logger, LOG_DEBUG, "Buddy bitmap state:\n");
 
-  for (int order = 0; order < MAX_ORDER; order++) {
-    int bits_per_order = 1 << (MAX_ORDER - order);
-    int words_per_order = 1 + (bits_per_order - 1) / 64;
+  if (DEBUG) {
+    log_message(&kernel_debug_logger, LOG_DEBUG, "PMM: Buddy bitmap state\n");
+  }
 
-    log_message(
-      &kernel_debug_logger,
-      LOG_DEBUG,
-      "  {order=%d, pages=%d units, granularity: %lu bytes}\n",
+  printf_("\nBuddy Allocator Status:\n");
+  printf_("+-------+----------+-------------+------------+--------------------------------------------------------------------------+\n");
+  printf_("| Order | Blocks   | Block Size  | Total Mem  | Status (1=Free)                                                          |\n");
+  printf_("+-------+----------+-------------+------------+--------------------------------------------------------------------------+\n");
+
+  for (int order = 0; order <= MAX_ORDER; order++) {
+    int blocks_in_order = 1 << (MAX_ORDER - order);
+    size_t block_size = (size_t)PAGE_SIZE << order;
+    size_t total_memory = block_size * blocks_in_order;
+
+    printf_(
+      "| %5d | %8d | %7zu KiB | %6zu MiB | ",
       order,
-      1 << order,
-      (unsigned long)PAGE_SIZE * (1 << order)
+      blocks_in_order,
+      block_size / 1024,
+      total_memory / (1024 * 1024)
     );
 
-    for (int word = 0; word < words_per_order; word++) {
-      uint64_t bitmap_word = bitmap[order][word];
-      int bits_in_word = (word == words_per_order - 1 && bits_per_order % 64 != 0) ? bits_per_order % 64 : 64;
+    if (DEBUG) {
+      log_message(
+        &kernel_debug_logger,
+        LOG_DEBUG,
+        "  {order=%2d, blocks_in_order=%4d, block_size=%4d kib, total_mem=%d mib}\n",
+        order,
+        blocks_in_order,
+        block_size / 1024,
+        total_memory / (1024 * 1024)
+      );
+    }
 
-      sprintf_(buffer, "[DEBUG]       {word=%02d: ", word);
-      serial_write_string(buffer);
+    char status[STATUS_WIDTH + 1];  // +1 for null terminator
+    memset(status, ' ', STATUS_WIDTH);
+    status[STATUS_WIDTH] = '\0';
 
-      for (int bit = 0; bit < bits_in_word; bit++) {
-        char status = (bitmap_word & (1ULL << bit)) ? '1' : '0';
-        sprintf_(buffer, "%c", status);
-        serial_write_string(buffer);
+    int words_needed = (blocks_in_order + 63) / 64;
+    int bit_count = 0;
 
-        if ((bit + 1) % 8 == 0) {
-          serial_write_string(" ");
+    // TODO: we need to debug log each order's bitmap
+    //       to the serial log
+
+    for (int word = 0; word < words_needed && bit_count < STATUS_WIDTH; word++) {
+      uint64_t current_word = bitmap[order][word];
+
+      for (int bit = 0; bit < 64 && bit_count < STATUS_WIDTH; bit++) {
+        status[bit_count++] = (current_word & (1ULL << bit)) ? '1' : '0';
+
+        if (bit_count % 8 == 0 && bit_count < STATUS_WIDTH) {
+          status[bit_count++] = ' ';
         }
       }
-
-      serial_write_string("\b}\n");
     }
+
+    if (blocks_in_order > STATUS_WIDTH) {
+      status[STATUS_WIDTH - 3] = '.';
+      status[STATUS_WIDTH - 2] = '.';
+      status[STATUS_WIDTH - 1] = '.';
+    }
+
+    printf_("%s |\n", status);
   }
+
+  printf_("+-------+----------+-------------+------------+--------------------------------------------------------------------------+\n");
 }

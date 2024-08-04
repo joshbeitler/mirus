@@ -45,7 +45,7 @@ void _start(void) {
 
   // Find kernel stack from bootloader
   uintptr_t kernel_stack_top = get_kernel_stack_ptr();
-  log_message(&kernel_debug_logger, LOG_INFO, "Successfully found kernel stack at {top=%p}\n", (void*)kernel_stack_top);
+  log_message(&kernel_debug_logger, LOG_INFO, "Successfully found kernel stack at: %p\n", (void*)kernel_stack_top);
 
   // Ensure we got a framebuffer and fetch the first available one.
   if (framebuffer_request.response == NULL
@@ -83,10 +83,10 @@ void _start(void) {
   // Load default bitmap font
   struct limine_file *default_terminal_font = limine_get_file("u_vga16.sfn");
   if (default_terminal_font == NULL) {
-    log_message(&kernel_debug_logger, LOG_FATAL, "Couldn't load default font: {file=u_vga16.sfn}\n");
+    log_message(&kernel_debug_logger, LOG_FATAL, "Couldn't load default font: u_vga16.sfn\n");
     hcf();
   }
-  log_message(&kernel_debug_logger, LOG_INFO, "Successfully loaded default font: {file=u_vga16.sfn}\n");
+  log_message(&kernel_debug_logger, LOG_INFO, "Successfully loaded default font: u_vga16.sfn\n");
 
   // Set up terminal
   terminal_initialize(default_terminal_font, framebuffer);
@@ -130,7 +130,12 @@ void _start(void) {
   printf_("Mirus, ahoy!\n\n");
 
   // test the pmm
-  pmm_debug_print_state();
+  pmm_debug_print_state(); // print initial state
+  uintptr_t test_addr = pmm_alloc(4000); // allocate a page (4096 bytes)
+  uintptr_t test_add2 = pmm_alloc(4000); // allocate another page (4096 bytes)
+  uintptr_t test_add3 = pmm_alloc(4000); // allocate another page (4096 bytes)
+  // pmm_free(test_addr, 4000); // free the page
+  pmm_debug_print_state(); // print state after allocation
 
   // If we got here, just chill. Halt the CPU.
   hcf();
