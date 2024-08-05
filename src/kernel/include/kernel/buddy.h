@@ -26,7 +26,7 @@ typedef struct {
 /**
  * Utility function to set a bit in a BuddyBitmap
  *
- * @param allocator The sub-bitmap to modify bits in
+ * @param bitmap The sub-bitmap to modify bits in
  * @param bit The bit to set
  */
 void buddy_allocator_set_bit(BuddyBitmapOrder bitmap, int bit);
@@ -34,7 +34,7 @@ void buddy_allocator_set_bit(BuddyBitmapOrder bitmap, int bit);
 /**
  * utility function to clear a bit in a buddybitmap
  *
- * @param allocator the sub-bitmap to modify bits in
+ * @param bitmap the sub-bitmap to modify bits in
  * @param bit the bit to clear
  */
 void buddy_allocator_clear_bit(BuddyBitmapOrder bitmap, int bit);
