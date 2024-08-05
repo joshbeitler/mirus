@@ -63,8 +63,7 @@ void buddy_allocator_init(BuddyAllocator *allocator, uintptr_t start_address) {
   allocator->start_address = start_address;
 
   // Set bitmap to all free
-  // memset(allocator->bitmap, 0xFF, sizeof(allocator->bitmap));
-  memset(allocator->bitmap, 0xFF, sizeof(BuddyBitmap));
+  memset(allocator->bitmap, 0xFF, sizeof(allocator->bitmap));
 }
 
 uintptr_t buddy_allocator_alloc(BuddyAllocator *allocator, size_t size) {
@@ -196,8 +195,6 @@ void buddy_allocator_free(BuddyAllocator *allocator, uintptr_t address, size_t s
 }
 
 void buddy_allocator_dump_bitmap(BuddyAllocator *allocator) {
-  char buffer[64];
-
   if (DEBUG) {
     log_message(&kernel_debug_logger, LOG_DEBUG, "PMM: Buddy bitmap state\n");
   }

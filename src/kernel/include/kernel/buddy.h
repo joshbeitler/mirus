@@ -92,7 +92,27 @@ int buddy_allocator_get_order(size_t size);
  */
 void buddy_allocator_init(BuddyAllocator *allocator, uintptr_t start_address);
 
+/**
+ * Allocates a block of memory of a given size
+ *
+ * @param allocator The BuddyAllocator to allocate from
+ * @param size The size of the block to allocate
+ *
+ * @return The address of the allocated block, or NULL if no block is available
+ */
 uintptr_t buddy_allocator_alloc(BuddyAllocator *allocator, size_t size);
+
+/**
+ * Frees a block of memory at a given address
+ *
+ * @param allocator The BuddyAllocator to free memory from
+ * @param address The address of the block to free
+ */
 void buddy_allocator_free(BuddyAllocator *allocator, uintptr_t address, size_t size);
 
+/**
+ * Dumps the bitmap of a BuddyAllocator to the console
+ *
+ * @param allocator The BuddyAllocator to dump the bitmap of
+ */
 void buddy_allocator_dump_bitmap(BuddyAllocator *allocator);

@@ -14,7 +14,6 @@
 #include <kernel/debug.h>
 #include <kernel/buddy.h>
 
-// TODO: Split buddy allocator implementation into own file
 // TODO: Support detailed logging of buddy allocator frame to debug log (full bitmap dump)
 // TODO: Support entire system memory by using a series of buddy allocators
 // TODO: Preserve special memory areas (ACPI, kernel, framebuffer, etc) in buddy allocator init
@@ -47,7 +46,6 @@ static uint64_t total_memory, usable_memory;
 static uint64_t total_frames;
 
 static BuddyAllocator buddy_allocator;
-
 
 // defines a series of buddy allocators to cover the entire system memory
 // #define BUDDY_ALLOCATOR_COUNT 1 // TODO: should be calculated based on system memory
