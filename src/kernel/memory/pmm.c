@@ -1,17 +1,14 @@
 #include <stdint.h>
 #include <stddef.h>
-#include <stdbool.h>
 
 #include <printf/printf.h>
 #include <limine/limine.h>
-#include <libk/string.h>
-#include <libk/math.h>
 
 #include <hal/serial.h>
 
-#include <kernel/pmm.h>
 #include <kernel/paging.h>
 #include <kernel/debug.h>
+#include <kernel/pmm.h>
 #include <kernel/buddy.h>
 
 // TODO: Finish memory size functions

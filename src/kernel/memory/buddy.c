@@ -11,19 +11,19 @@
 // Used for printing buddy allocator bitmap in a table
 #define STATUS_WIDTH 72
 
-void buddy_allocator_set_bit(uint64_t *bitmap, int bit) {
+void buddy_allocator_set_bit(BuddyBitmapOrder bitmap, int bit) {
   bitmap[bit / 64] |= (1ULL << (bit % 64));
 }
 
-void buddy_allocator_clear_bit(uint64_t *bitmap, int bit) {
+void buddy_allocator_clear_bit(BuddyBitmapOrder bitmap, int bit) {
   bitmap[bit / 64] &= ~(1ULL << (bit % 64));
 }
 
-int buddy_allocator_test_bit(uint64_t *bitmap, int bit) {
+int buddy_allocator_test_bit(BuddyBitmapOrder bitmap, int bit) {
   return (bitmap[bit / 64] & (1ULL << (bit % 64))) != 0;
 }
 
-int buddy_allocator_find_first_set(uint64_t *bitmap, int size) {
+int buddy_allocator_find_first_set(BuddyBitmapOrder bitmap, int size) {
   for (int i = 0; i < size; i++) {
     if (bitmap[i] != 0) {
       // Uses builtin ffs function to find the first set bit super quickly

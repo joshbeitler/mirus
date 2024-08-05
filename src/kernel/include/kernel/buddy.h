@@ -16,6 +16,7 @@
  * 1 = free, 0 = used.
  */
 typedef uint64_t BuddyBitmap[MAX_ORDER + 1][1 + (1 << MAX_ORDER) / 64];
+typedef uint64_t* BuddyBitmapOrder;
 
 typedef struct {
   uintptr_t start_address;
@@ -25,40 +26,40 @@ typedef struct {
 /**
  * Utility function to set a bit in a BuddyBitmap
  *
- * @param allocator The bitmap to modify bits in
+ * @param allocator The sub-bitmap to modify bits in
  * @param bit The bit to set
  */
-void buddy_allocator_set_bit(uint64_t *bitmap, int bit);
+void buddy_allocator_set_bit(BuddyBitmapOrder bitmap, int bit);
 
 /**
- * Utility function to clear a bit in a BuddyBitmap
+ * utility function to clear a bit in a buddybitmap
  *
- * @param allocator The bitmap to modify bits in
- * @param bit The bit to clear
+ * @param allocator the sub-bitmap to modify bits in
+ * @param bit the bit to clear
  */
-void buddy_allocator_clear_bit(uint64_t *bitmap, int bit);
+void buddy_allocator_clear_bit(BuddyBitmapOrder bitmap, int bit);
 
 /**
  * Utility function to check a bit in a BuddyBitmap
  *
- * @param allocator The bitmap to check for bits in
+ * @param bitmap The sub-bitmap to check for bits in
  * @param bit The bit to check
  *
  * @return Status of bit
  */
-int buddy_allocator_test_bit(uint64_t *bitmap, int bit);
+int buddy_allocator_test_bit(BuddyBitmapOrder bitmap, int bit);
 
 /**
  * Finds first set bit in the bitmap. This allows us to use 1s to represent
  * free pages and 0s to represent used pages, and therefore we can find the
  * first free page by finding the first set bit super quickly with ffs.
  *
- * @param bitmap The bitmap to search
+ * @param bitmap The sub-bitmap to search
  * @param size The size of the bitmap in 64-bit words
  *
  * @return The index of the first set bit, or -1 if no set bit is found
  */
-int buddy_allocator_find_first_set(uint64_t *bitmap, int size);
+int buddy_allocator_find_first_set(BuddyBitmapOrder bitmap, int size);
 
 /**
  * Utility function to find the first usable free block in a given order
