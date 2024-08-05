@@ -12,6 +12,16 @@
 #include <kernel/pmm.h>
 #include <kernel/paging.h>
 #include <kernel/debug.h>
+#include <kernel/buddy.h>
+
+// TODO: Split buddy allocator implementation into own file
+// TODO: Support detailed logging of buddy allocator frame to debug log (full bitmap dump)
+// TODO: Support entire system memory by using a series of buddy allocators
+// TODO: Preserve special memory areas (ACPI, kernel, framebuffer, etc) in buddy allocator init
+// TODO: Implement a slab allocator for small objects
+// TODO: Implement kmalloc on top of slab allocator and buddy allocator together
+// TODO: Implement a kfree function to free memory allocated by kmalloc
+// TODO: Finish memory size functions
 
 /**
  * Human-readable names for memory map entry types
@@ -28,7 +38,6 @@ static const char* const memmap_type_strings[] = {
 };
 
 #define MEMMAP_TYPE_COUNT (sizeof(memmap_type_strings) / sizeof(memmap_type_strings[0]))
-#define STATUS_WIDTH 72
 
 /**
  * Internal helper variables
@@ -37,124 +46,12 @@ static uintptr_t kernel_start, kernel_end;
 static uint64_t total_memory, usable_memory;
 static uint64_t total_frames;
 
-/**
- * Bitmap of physical memory pages. 2D array of uint64_t, where the first
- * dimension is the order of the page size and the second dimension is the
- * number of uint64_t words needed to represent all pages in that order.
- * Each bit in the uint64_t represents the availability of a page,
- * 1 = free, 0 = used.
- */
-static uint64_t bitmap[MAX_ORDER + 1][1 + (1 << MAX_ORDER) / 64];
-#define PAGE_SHIFT 12 // Derived from PAGE_SIZE
+static BuddyAllocator buddy_allocator;
 
-/**
- * Utility function to set a bit in the memory map
- *
- * @param bitmap The bitmap to modify
- * @param bit The bit to set
- */
-static void set_bit(uint64_t *bitmap, int bit) {
-  bitmap[bit / 64] |= (1ULL << (bit % 64));
-}
 
-/**
- * Utility function to clear a bit in the memory map
- *
- * @param bitmap The bitmap to modify
- * @param bit The bit to clear
- */
-static void clear_bit(uint64_t *bitmap, int bit) {
-  bitmap[bit / 64] &= ~(1ULL << (bit % 64));
-}
-
-/**
- * Utility function to check a bit in the memory map
- *
- * @param bitmap The bitmap to modify
- * @param bit The bit to check
- */
-static int test_bit(uint64_t *bitmap, int bit) {
-  return (bitmap[bit / 64] & (1ULL << (bit % 64))) != 0;
-}
-
-/**
- * Finds first set bit in the bitmap. This allows us to use 1s to represent
- * free pages and 0s to represent used pages, and therefore we can find the
- * first free page by finding the first set bit super quickly with ffs.
- *
- * @param bitmap The bitmap to search
- * @param size The size of the bitmap in 64-bit words
- * @return The index of the first set bit, or -1 if no set bit is found
- */
-static int find_first_set(uint64_t *bitmap, int size) {
-  for (int i = 0; i < size; i++) {
-    if (bitmap[i] != 0) {
-      // Uses builtin ffs function to find the first set bit super quickly
-      return i * 64 + __builtin_ffsll(bitmap[i]) - 1;
-    }
-  }
-
-  return -1;  // No set bit found
-}
-
-/**
- * Utility function to split a block into smaller blocks (creates buddies)
- *
- * @param order The order of the block to split
- * @param bit The bit of the block to split
- */
-static void split_block(int order, int bit) {
-  for (int i = order; i > 0; i--) {
-    int buddy_bit = bit ^ (1 << (i - 1));
-    set_bit(bitmap[i - 1], buddy_bit);
-  }
-}
-
-/**
- * Utility function to marka a block as used
- *
- * @param order The order of the block to mark as used
- * @param bit The bit of the block to mark as used
- */
-static void mark_block_used(int order, int bit) {
-  clear_bit(bitmap[order], bit);
-}
-
-/**
- * Utility function to find which order a given size will fit into
- *
- * @param size The size to find the order for
- * @return The order that the size fits into
- */
-static int get_order(size_t size) {
-  int order = 0;
-  size = (size - 1) >> PAGE_SHIFT;
-
-  while (size > 0) {
-    order++;
-    size >>= 1;
-  }
-
-  return order;
-}
-
-/**
- * Utility function to find the first usable free block in a given order
- *
- * @param order The order of the block to find
- * @return The bit of the first free block, or -1 if no free block is found
- */
-static int find_free_block(int order) {
-  for (int i = order; i <= MAX_ORDER; i++) {
-    int bit = find_first_set(bitmap[i], 1 + (1 << MAX_ORDER) / 64);
-
-    if (bit != -1) {
-      return bit;
-    }
-  }
-
-  return -1;
-}
+// defines a series of buddy allocators to cover the entire system memory
+// #define BUDDY_ALLOCATOR_COUNT 1 // TODO: should be calculated based on system memory
+// static BuddyAllocator buddy_allocators[BUDDY_ALLOCATOR_COUNT];
 
 /**
  * Helper function to get a human-readable name for a memory map entry type
@@ -255,7 +152,7 @@ void pmm_initialize(
   total_frames = total_memory / PAGE_SIZE;
 
   // The bitmap needs to be initialized to all 1s (all memory is free)
-  memset(bitmap, 0xFF, sizeof(bitmap));
+  buddy_allocator_init(&buddy_allocator, 0); // TODO: acutally initialize with address
 
   // Memory mapping:
 
@@ -299,131 +196,11 @@ void pmm_initialize(
 }
 
 uintptr_t pmm_alloc(size_t size) {
-  int order = get_order(size);
-  int bit = find_free_block(order);
-
-  if (DEBUG) {
-    log_message(
-      &kernel_debug_logger,
-      LOG_DEBUG,
-      "PMM: Allocating %zu bytes (order %d)\n",
-      size,
-      order
-    );
-  }
-
-  if (bit == -1) {
-    if (DEBUG) {
-      log_message(
-        &kernel_debug_logger,
-        LOG_ERROR,
-        "  No free block found for order: %d\n",
-        order
-      );
-    }
-
-    return (uintptr_t)NULL;
-  }
-
-  if (DEBUG) {
-    log_message(
-      &kernel_debug_logger,
-      LOG_DEBUG,
-      "  Free block found at bit %d for order: %d\n",
-      bit,
-      order
-    );
-  }
-
-  // Split larger blocks if necessary
-  for (int i = MAX_ORDER; i > order; i--) {
-    if (test_bit(bitmap[i], bit >> (i - order))) {
-      clear_bit(bitmap[i], bit >> (i - order));
-      set_bit(bitmap[i-1], (bit >> (i - order - 1)) ^ 1);
-    }
-  }
-
-  // Mark the allocated block as used
-  clear_bit(bitmap[order], bit);
-
-  // Calculate the physical address
-  uintptr_t address = (uintptr_t)bit << (PAGE_SHIFT + order);
-
-  if (DEBUG) {
-    log_message(
-      &kernel_debug_logger,
-      LOG_DEBUG,
-      "  Allocated %zu bytes (requested: %zu bytes) at 0x%016lx\n",
-      (size_t)1 << (PAGE_SHIFT + order),
-      size,
-      address
-    );
-  }
-
-  return address;
+  return buddy_allocator_alloc(&buddy_allocator, size);
 }
 
 void pmm_free(uintptr_t address, size_t size) {
-  if (DEBUG) {
-    log_message(
-      &kernel_debug_logger,
-      LOG_DEBUG,
-      "PMM: Freeing %zu bytes at address 0x%016lx\n",
-      size,
-      address
-    );
-  }
-
-  // Calculate the order of the block being freed
-  int order = get_order(size);
-
-  // Calculate the bit index in the bitmap
-  int bit = (address >> (PAGE_SHIFT + order));
-
-  while (order <= MAX_ORDER) {
-    // Set this bit as free
-    set_bit(bitmap[order], bit);
-
-    if (DEBUG) {
-      log_message(
-        &kernel_debug_logger,
-        LOG_DEBUG,
-        "  Freed block at bit %d for order %d\n",
-        bit,
-        order
-      );
-    }
-
-    // If we're at the highest order or if the buddy is not free, we're done
-    if (order == MAX_ORDER || !test_bit(bitmap[order], bit ^ 1)) {
-      return;
-    }
-
-    // If we're here, we can merge with the buddy
-    if (DEBUG) {
-      log_message(
-        &kernel_debug_logger,
-        LOG_DEBUG,
-        "  Merging blocks at bits %d and %d for order %d\n",
-        bit,
-        bit ^ 1,
-        order
-      );
-    }
-
-    // Move to the next order
-    bit >>= 1;
-    order++;
-  }
-
-  // We should never reach here, but if we do, it's an error
-  if (DEBUG) {
-    log_message(
-      &kernel_debug_logger,
-      LOG_ERROR,
-      "PMM: Error in pmm_free - reached end of function unexpectedly\n"
-    );
-  }
+  buddy_allocator_free(&buddy_allocator, address, size);
 }
 
 size_t pmm_get_total_memory() {
@@ -435,72 +212,5 @@ size_t pmm_get_free_memory() {
 }
 
 void pmm_debug_print_state() {
-  char buffer[64];
-
-  if (DEBUG) {
-    log_message(&kernel_debug_logger, LOG_DEBUG, "PMM: Buddy bitmap state\n");
-  }
-
-  printf_("\nBuddy Allocator Status:\n");
-  printf_("+-------+----------+-------------+------------+--------------------------------------------------------------------------+\n");
-  printf_("| Order | Blocks   | Block Size  | Total Mem  | Status (1=Free)                                                          |\n");
-  printf_("+-------+----------+-------------+------------+--------------------------------------------------------------------------+\n");
-
-  for (int order = 0; order <= MAX_ORDER; order++) {
-    int blocks_in_order = 1 << (MAX_ORDER - order);
-    size_t block_size = (size_t)PAGE_SIZE << order;
-    size_t total_memory = block_size * blocks_in_order;
-
-    printf_(
-      "| %5d | %8d | %7zu KiB | %6zu MiB | ",
-      order,
-      blocks_in_order,
-      block_size / 1024,
-      total_memory / (1024 * 1024)
-    );
-
-    if (DEBUG) {
-      log_message(
-        &kernel_debug_logger,
-        LOG_DEBUG,
-        "  {order=%2d, blocks_in_order=%4d, block_size=%4d kib, total_mem=%d mib}\n",
-        order,
-        blocks_in_order,
-        block_size / 1024,
-        total_memory / (1024 * 1024)
-      );
-    }
-
-    char status[STATUS_WIDTH + 1];  // +1 for null terminator
-    memset(status, ' ', STATUS_WIDTH);
-    status[STATUS_WIDTH] = '\0';
-
-    int words_needed = (blocks_in_order + 63) / 64;
-    int bit_count = 0;
-
-    // TODO: we need to debug log each order's bitmap
-    //       to the serial log
-
-    for (int word = 0; word < words_needed && bit_count < STATUS_WIDTH; word++) {
-      uint64_t current_word = bitmap[order][word];
-
-      for (int bit = 0; bit < 64 && bit_count < STATUS_WIDTH; bit++) {
-        status[bit_count++] = (current_word & (1ULL << bit)) ? '1' : '0';
-
-        if (bit_count % 8 == 0 && bit_count < STATUS_WIDTH) {
-          status[bit_count++] = ' ';
-        }
-      }
-    }
-
-    if (blocks_in_order > STATUS_WIDTH) {
-      status[STATUS_WIDTH - 3] = '.';
-      status[STATUS_WIDTH - 2] = '.';
-      status[STATUS_WIDTH - 1] = '.';
-    }
-
-    printf_("%s |\n", status);
-  }
-
-  printf_("+-------+----------+-------------+------------+--------------------------------------------------------------------------+\n");
+  buddy_allocator_dump_bitmap(&buddy_allocator);
 }
