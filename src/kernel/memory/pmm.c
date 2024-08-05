@@ -14,12 +14,6 @@
 #include <kernel/debug.h>
 #include <kernel/buddy.h>
 
-// TODO: Support detailed logging of buddy allocator frame to debug log (full bitmap dump)
-// TODO: Support entire system memory by using a series of buddy allocators
-// TODO: Preserve special memory areas (ACPI, kernel, framebuffer, etc) in buddy allocator init
-// TODO: Implement a slab allocator for small objects
-// TODO: Implement kmalloc on top of slab allocator and buddy allocator together
-// TODO: Implement a kfree function to free memory allocated by kmalloc
 // TODO: Finish memory size functions
 
 /**
