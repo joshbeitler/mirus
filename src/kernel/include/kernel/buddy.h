@@ -22,11 +22,6 @@ typedef struct {
   BuddyBitmap bitmap;
 } BuddyAllocator;
 
-// get order
-// find free block
-// alloc
-// free
-
 /**
  * Utility function to set a bit in a BuddyBitmap
  *
