@@ -55,6 +55,7 @@ static BuddyAllocator buddy_allocator;
  * Helper function to get a human-readable name for a memory map entry type
  *
  * @param type Memory map entry type
+ *
  * @return Human-readable name for the type
  */
 static const char* get_memmap_type_string(uint64_t type) {
@@ -71,6 +72,7 @@ static const char* get_memmap_type_string(uint64_t type) {
  * @param size Size in bytes
  * @param buffer Buffer to write the formatted string to
  * @param buffer_size Size of the buffer
+ *
  * @return Pointer to the buffer
  */
 static char* format_memory_size(uint64_t size, char* buffer, size_t buffer_size) {
@@ -193,10 +195,12 @@ void pmm_initialize(
   }
 }
 
+// TODO: does this get replaced with kmalloc?
 uintptr_t pmm_alloc(size_t size) {
   return buddy_allocator_alloc(&buddy_allocator, size);
 }
 
+// TODO: does this get replaced with kfree?
 void pmm_free(uintptr_t address, size_t size) {
   buddy_allocator_free(&buddy_allocator, address, size);
 }
