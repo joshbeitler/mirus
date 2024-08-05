@@ -36,7 +36,10 @@ int buddy_allocator_find_first_set(BuddyBitmapOrder bitmap, int size) {
 
 int buddy_allocator_find_free_block(BuddyAllocator* allocator, int order) {
   for (int i = order; i <= MAX_ORDER; i++) {
-    int bit = buddy_allocator_find_first_set(allocator->bitmap[i], 1 + (1 << MAX_ORDER) / 64);
+    int bit = buddy_allocator_find_first_set(
+      allocator->bitmap[i],
+      1 + (1 << MAX_ORDER) / 64
+    );
 
     if (bit != -1) {
       return bit;
@@ -131,7 +134,11 @@ uintptr_t buddy_allocator_alloc(BuddyAllocator *allocator, size_t size) {
   return address;
 }
 
-void buddy_allocator_free(BuddyAllocator *allocator, uintptr_t address, size_t size) {
+void buddy_allocator_free(
+  BuddyAllocator *allocator,
+  uintptr_t address,
+  size_t size
+) {
   if (DEBUG) {
     log_message(
       &kernel_debug_logger,
@@ -163,7 +170,10 @@ void buddy_allocator_free(BuddyAllocator *allocator, uintptr_t address, size_t s
     }
 
     // If we're at the highest order or if the buddy is not free, we're done
-    if (order == MAX_ORDER || !buddy_allocator_test_bit(allocator->bitmap[order], bit ^ 1)) {
+    if (
+      order == MAX_ORDER ||
+      !buddy_allocator_test_bit(allocator->bitmap[order], bit ^ 1)
+    ) {
       return;
     }
 

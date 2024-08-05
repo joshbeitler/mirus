@@ -104,7 +104,11 @@ uintptr_t buddy_allocator_alloc(BuddyAllocator *allocator, size_t size);
  * @param allocator The BuddyAllocator to free memory from
  * @param address The address of the block to free
  */
-void buddy_allocator_free(BuddyAllocator *allocator, uintptr_t address, size_t size);
+void buddy_allocator_free(
+  BuddyAllocator *allocator,
+  uintptr_t address,
+  size_t size
+);
 
 /**
  * Dumps the bitmap of a BuddyAllocator to the console
