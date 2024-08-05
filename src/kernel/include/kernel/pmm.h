@@ -26,6 +26,7 @@ void pmm_initialize(
  * physical memory.
  *
  * @param size Size of the block to allocate
+ *
  * @return The physical address of the allocated block
  */
 uintptr_t pmm_alloc(size_t size);
