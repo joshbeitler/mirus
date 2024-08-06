@@ -3,9 +3,10 @@
 
 #include <ssfn/ssfn.h>
 #include <limine/limine.h>
+#include <libk/string.h>
 
 #include <hal/serial.h>
-#include <libk/string.h>
+#include <kernel/debug.h>
 
 #include <drivers/terminal.h>
 
@@ -35,8 +36,19 @@ void terminal_initialize(
   terminal.cursor_y = 0;
   terminal.buffer_size = terminal.width * terminal.height;
 
+  if (DEBUG) {
+    log_message(
+      &kernel_debug_logger,
+      LOG_INFO,
+      "Initializing terminal {width=%d, height=%d, buffer_size=%d}\n",
+      terminal.width,
+      terminal.height,
+      terminal.buffer_size
+    );
+  }
+
   // TODO: should actually allocate this dynamically
-  #define MAX_TERM_SIZE 10000
+  #define MAX_TERM_SIZE 28800
   static CharacterCell static_buffer[MAX_TERM_SIZE];
   terminal.buffer = static_buffer;
   terminal_clear();
