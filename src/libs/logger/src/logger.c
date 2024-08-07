@@ -22,7 +22,6 @@ const char* log_level_to_string(log_level_t level) {
 void log_init(logger_t *logger, log_writer_t *writers, int num_writers) {
   logger->writers = writers;
   logger->num_writers = num_writers;
-  logger->level = LOG_INFO;  // Default log level
 }
 
 void log_message(
@@ -32,8 +31,6 @@ void log_message(
   const char *format,
   ...
 ) {
-  if (level < logger->level) return;
-
   char message[MAX_LOG_MESSAGE_SIZE];
   va_list args;
   va_start(args, format);
@@ -68,8 +65,6 @@ void log_complex(
   const char *message,
   const char *json_data
 ) {
-  if (level < logger->level) return;
-
   // Remove trailing newline from message if present
   size_t msg_len = strlen(message);
   char cleaned_message[MAX_LOG_MESSAGE_SIZE];

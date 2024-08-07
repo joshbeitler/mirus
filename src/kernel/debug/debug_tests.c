@@ -52,6 +52,14 @@ void debug_test_exceptions() {
 }
 
 void debug_test_buddy_allocator() {
+
+  log_message(
+    &kernel_debug_logger,
+    LOG_DEBUG,
+    "kernel",
+    "Starting buddy allocator test...\n"
+  );
+
   printf_("Starting complex PMM test...\n");
 
   printf_("Initial state:\n");

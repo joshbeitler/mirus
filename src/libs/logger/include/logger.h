@@ -20,7 +20,6 @@ typedef void (*log_writer_t)(const char*);
 typedef struct {
   log_writer_t *writers;  // Array of writer functions
   int num_writers;        // Number of writers
-  log_level_t level;      // Current logging level
 } logger_t;
 
 // Logger API
