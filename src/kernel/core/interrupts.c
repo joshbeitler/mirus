@@ -7,8 +7,10 @@
 #include <kernel/panic.h>
 #include <kernel/debug.h>
 
+// TODO: use jemi for logging in debug mode
+
 void isr_initialize() {
-  log_message(&kernel_debug_logger, LOG_INFO, "  Registering ISRs\n");
+  log_message(&kernel_debug_logger, LOG_INFO, "interrupts", "Registering ISRs\n");
 
   idt_set_entry(0, isr_division_by_zero);
   idt_set_entry(1, isr_debug_exception);
@@ -44,11 +46,11 @@ void isr_initialize() {
   idt_set_entry(31, isr_reserved_exception);
   idt_set_entry(32, isr_reserved_exception);
 
-  log_message(&kernel_debug_logger, LOG_INFO, "  Built %d IDT entries\n", IDT_ENTRIES);
+  log_message(&kernel_debug_logger, LOG_INFO, "interrupts", "Built %d IDT entries\n", IDT_ENTRIES);
 
-  log_message(&kernel_debug_logger, LOG_INFO, "  Enabling interrupts\n");
+  log_message(&kernel_debug_logger, LOG_INFO, "interrupts", "Enabling interrupts\n");
   __asm__ volatile("sti");
-  log_message(&kernel_debug_logger, LOG_INFO, "  Interrupts enabled\n");
+  log_message(&kernel_debug_logger, LOG_INFO, "interrupts", "Interrupts enabled\n");
 }
 
 void isr_division_by_zero(InterruptFrame *frame, uint64_t error_code) {

@@ -77,7 +77,8 @@ uintptr_t buddy_allocator_alloc(BuddyAllocator *allocator, size_t size) {
     log_message(
       &kernel_debug_logger,
       LOG_DEBUG,
-      "PMM: Allocating %zu bytes (order %d)\n",
+      "memory_manager",
+      "Allocating %zu bytes (order %d)\n",
       size,
       order
     );
@@ -88,7 +89,8 @@ uintptr_t buddy_allocator_alloc(BuddyAllocator *allocator, size_t size) {
       log_message(
         &kernel_debug_logger,
         LOG_ERROR,
-        "  No free block found for order: %d\n",
+        "memory_manager",
+        "No free block found for order: %d\n",
         order
       );
     }
@@ -100,7 +102,8 @@ uintptr_t buddy_allocator_alloc(BuddyAllocator *allocator, size_t size) {
     log_message(
       &kernel_debug_logger,
       LOG_DEBUG,
-      "  Free block found at bit %d for order: %d\n",
+      "memory_manager",
+      "Free block found at bit %d for order: %d\n",
       bit,
       order
     );
@@ -124,7 +127,8 @@ uintptr_t buddy_allocator_alloc(BuddyAllocator *allocator, size_t size) {
     log_message(
       &kernel_debug_logger,
       LOG_DEBUG,
-      "  Allocated %zu bytes (requested: %zu bytes) at 0x%016lx\n",
+      "memory_manager",
+      "Allocated %zu bytes (requested: %zu bytes) at 0x%016lx\n",
       (size_t)1 << (PAGE_SHIFT + order),
       size,
       address
@@ -143,7 +147,8 @@ void buddy_allocator_free(
     log_message(
       &kernel_debug_logger,
       LOG_DEBUG,
-      "PMM: Freeing %zu bytes at address 0x%016lx\n",
+      "memory_manager",
+      "Freeing %zu bytes at address 0x%016lx\n",
       size,
       address
     );
@@ -163,7 +168,8 @@ void buddy_allocator_free(
       log_message(
         &kernel_debug_logger,
         LOG_DEBUG,
-        "  Freed block at bit %d for order %d\n",
+        "memory_manager",
+        "Freed block at bit %d for order %d\n",
         bit,
         order
       );
@@ -182,7 +188,8 @@ void buddy_allocator_free(
       log_message(
         &kernel_debug_logger,
         LOG_DEBUG,
-        "  Merging blocks at bits %d and %d for order %d\n",
+        "memory_manager",
+        "Merging blocks at bits %d and %d for order %d\n",
         bit,
         bit ^ 1,
         order
@@ -199,14 +206,15 @@ void buddy_allocator_free(
     log_message(
       &kernel_debug_logger,
       LOG_ERROR,
-      "PMM: Error in pmm_free - reached end of function unexpectedly\n"
+      "memory_manager",
+      "Error in pmm_free - reached end of function unexpectedly\n"
     );
   }
 }
 
 void buddy_allocator_dump_bitmap(BuddyAllocator *allocator) {
   if (DEBUG) {
-    log_message(&kernel_debug_logger, LOG_DEBUG, "PMM: Buddy bitmap state\n");
+    log_message(&kernel_debug_logger, LOG_DEBUG, "memory_manager", "Buddy bitmap state\n");
   }
 
   printf_("\nBuddy Allocator Status:\n");
@@ -228,10 +236,12 @@ void buddy_allocator_dump_bitmap(BuddyAllocator *allocator) {
     );
 
     if (DEBUG) {
+      // TODO: use jemi here :D
       log_message(
         &kernel_debug_logger,
         LOG_DEBUG,
-        "  {order=%2d, blocks_in_order=%4d, block_size=%4d kib, total_mem=%d mib}\n",
+        "memory_manager",
+        "{order=%2d, blocks_in_order=%4d, block_size=%4d kib, total_mem=%d mib}\n",
         order,
         blocks_in_order,
         block_size / 1024,

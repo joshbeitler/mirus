@@ -19,3 +19,5 @@ The third party libraries are not bundled in the repository, but are fetched and
   - A simple logging library that provides a `printf`-like interface to log messages along with their severity level.
 - libk
   - A collection of utility functions that are used by the kernel.
+- jemi
+  - A form of the really excellent [`jemi`](https://github.com/rdpoor/jemi) library by rdpoor. Modified to work with the Mirus kernel environment.
