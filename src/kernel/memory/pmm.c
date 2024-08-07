@@ -141,7 +141,7 @@ static void log_memory_map_debug(
   *json_ptr = '\0';  // Null-terminate the string
 
   // Log the complex data
-  log_complex(&kernel_debug_logger, LOG_INFO, "memory_manager", "Memory Map", json_str);
+  log_complex(&kernel_debug_logger, LOG_DEBUG, "memory_manager", "Memory Map", json_str);
 
   // Reset jemi for future use
   jemi_reset();
