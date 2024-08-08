@@ -3,6 +3,7 @@
 
 #include <printf/printf.h>
 #include <libk/string.h>
+#include <jems/jems.h>
 
 #include <kernel/paging.h>
 #include <kernel/debug.h>
@@ -10,6 +11,7 @@
 
 // Used for printing buddy allocator bitmap in a table
 #define STATUS_WIDTH 72
+#define JEMS_MAX_LEVEL 10 // TODO: we should re-use jems instance
 
 void buddy_allocator_set_bit(BuddyBitmapOrder bitmap, int bit) {
   bitmap[bit / 64] |= (1ULL << (bit % 64));
@@ -212,9 +214,60 @@ void buddy_allocator_free(
   }
 }
 
+
+/** testing the json log emitter */
+static void jems_writer(char ch, uintptr_t arg) {
+  logger_t *logger = (logger_t *)arg;
+  char str[2] = {ch, '\0'};
+  log_stream_data(logger, str, 1);
+}
+
+static void buddy_allocator_bitmap_to_json(BuddyAllocator *allocator) {
+  static jems_level_t jems_levels[JEMS_MAX_LEVEL];
+  static jems_t jems;
+  char buffer[64];
+
+  // Start the log stream
+  log_stream_start(&kernel_debug_logger, LOG_DEBUG, "memory_manager", "Buddy allocator bitmap state");
+
+  jems_init(&jems, jems_levels, JEMS_MAX_LEVEL, jems_writer, (uintptr_t)&kernel_debug_logger);
+  jems_object_open(&jems);
+  jems_key_array_open(&jems, "bitmap");
+
+  for (int order = 0; order <= MAX_ORDER; order++) {
+    int blocks_in_order = 1 << (MAX_ORDER - order);
+    size_t block_size = (size_t)PAGE_SIZE << order;
+    size_t total_memory = block_size * blocks_in_order;
+
+    jems_object_open(&jems);
+    jems_key_integer(&jems, "order", order);
+    jems_key_integer(&jems, "blocks_in_order", blocks_in_order);
+    snprintf_(buffer, sizeof(buffer), "%d KiB", block_size / 1024);
+    jems_key_string(&jems, "block_size", buffer);
+    snprintf_(buffer, sizeof(buffer), "%d MiB", total_memory / (1024 * 1024));
+    jems_key_string(&jems, "total_memory", buffer);
+    jems_key_array_open(&jems, "blocks");
+
+    for (int i = 0; i < blocks_in_order; i++) {
+      jems_integer(&jems, !buddy_allocator_test_bit(allocator->bitmap[order], i));
+    }
+
+    jems_array_close(&jems);
+    jems_object_close(&jems);
+  }
+
+  jems_array_close(&jems);
+  jems_object_close(&jems);
+
+  // End the log stream
+  log_stream_end(&kernel_debug_logger);
+}
+
+
 void buddy_allocator_dump_bitmap(BuddyAllocator *allocator) {
   if (DEBUG) {
-    log_message(&kernel_debug_logger, LOG_DEBUG, "memory_manager", "Buddy bitmap state\n");
+    // log_message(&kernel_debug_logger, LOG_DEBUG, "memory_manager", "Buddy bitmap state\n");
+    buddy_allocator_bitmap_to_json(allocator);
   }
 
   printf_("\nBuddy Allocator Status:\n");
@@ -235,29 +288,12 @@ void buddy_allocator_dump_bitmap(BuddyAllocator *allocator) {
       total_memory / (1024 * 1024)
     );
 
-    if (DEBUG) {
-      // TODO: use jemi here :D
-      log_message(
-        &kernel_debug_logger,
-        LOG_DEBUG,
-        "memory_manager",
-        "{order=%2d, blocks_in_order=%4d, block_size=%4d kib, total_mem=%d mib}\n",
-        order,
-        blocks_in_order,
-        block_size / 1024,
-        total_memory / (1024 * 1024)
-      );
-    }
-
     char status[STATUS_WIDTH + 1];  // +1 for null terminator
     memset(status, ' ', STATUS_WIDTH);
     status[STATUS_WIDTH] = '\0';
 
     int words_needed = (blocks_in_order + 63) / 64;
     int bit_count = 0;
-
-    // TODO: we need to debug log each order's bitmap
-    //       to the serial log
 
     for (int word = 0; word < words_needed && bit_count < STATUS_WIDTH; word++) {
       uint64_t current_word = allocator->bitmap[order][word];

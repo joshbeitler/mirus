@@ -4,6 +4,7 @@
 #include <printf/printf.h>
 #include <limine/limine.h>
 #include <jems/jems.h>
+#include <logger.h>
 
 #include <hal/serial.h>
 
@@ -89,9 +90,9 @@ static char* format_memory_size(uint64_t size, char* buffer, size_t buffer_size)
 
 /** testing the json log emitter */
 static void jems_writer(char ch, uintptr_t arg) {
-  char **buf = (char **)arg;
-  **buf = ch;
-  (*buf)++;
+  logger_t *logger = (logger_t *)arg;
+  char str[2] = {ch, '\0'};
+  log_stream_data(logger, str, 1);
 }
 
 static void log_memory_map_debug(
@@ -104,13 +105,12 @@ static void log_memory_map_debug(
 ) {
   static jems_level_t jems_levels[JEMS_MAX_LEVEL];
   static jems_t jems;
-
   char buffer[64];
-  char json_str[4096];
-  char *json_ptr = json_str;
 
-  jems_init(&jems, jems_levels, JEMS_MAX_LEVEL, jems_writer, (uintptr_t)&json_ptr);
+  // Start the log stream
+  log_stream_start(&kernel_debug_logger, LOG_DEBUG, "memory_manager", "Memory Map");
 
+  jems_init(&jems, jems_levels, JEMS_MAX_LEVEL, jems_writer, (uintptr_t)&kernel_debug_logger);
   jems_object_open(&jems);
 
   format_memory_size(total_memory, buffer, sizeof(buffer));
@@ -126,27 +126,20 @@ static void log_memory_map_debug(
   jems_key_string(&jems, "kernel_size", buffer);
 
   jems_key_array_open(&jems, "entries");
-
   for (size_t i = 0; i < entry_count; i++) {
     struct limine_memmap_entry *entry = entries[i];
-
     jems_object_open(&jems);
-
     snprintf_(buffer, sizeof(buffer), "0x%016llx", entry->base);
     jems_key_string(&jems, "base", buffer);
     jems_key_integer(&jems, "length", entry->length);
     jems_key_string(&jems, "type", get_memmap_type_string(entry->type));
-
     jems_object_close(&jems);
   }
-
   jems_array_close(&jems);
   jems_object_close(&jems);
 
-  *json_ptr = '\0';  // Null-terminate the string
-
-  // Log the complex data
-  log_complex(&kernel_debug_logger, LOG_DEBUG, "memory_manager", "Memory Map", json_str);
+  // End the log stream
+  log_stream_end(&kernel_debug_logger);
 }
 /** end testing the json log emitter */
 
