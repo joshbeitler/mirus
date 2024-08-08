@@ -5,8 +5,11 @@
 
 #include <libk/string.h>
 #include <printf/printf.h>
+#include <jems/jems.h>
 
-#include "logger.h"
+#include <logger.h>
+
+#define JEMS_MAX_LEVEL 5  // Adjust this based on expected maximum nesting level
 
 const char* log_level_to_string(log_level_t level) {
   switch (level) {
@@ -22,6 +25,32 @@ const char* log_level_to_string(log_level_t level) {
 void log_init(logger_t *logger, log_writer_t *writers, int num_writers) {
   logger->writers = writers;
   logger->num_writers = num_writers;
+}
+
+static void jems_writer(char ch, uintptr_t arg) {
+  char **buf = (char **)arg;
+  **buf = ch;
+  (*buf)++;
+}
+
+static void create_json_log(
+  jems_t *jems,
+  log_level_t level,
+  const char *component,
+  const char *message,
+  const char *json_data
+) {
+  jems_object_open(jems);
+
+  jems_key_string(jems, "level", log_level_to_string(level));
+  jems_key_string(jems, "component", component);
+  jems_key_string(jems, "message", message);
+
+  if (json_data) {
+    jems_key_literal(jems, "data", json_data, strlen(json_data));
+  }
+
+  jems_object_close(jems);
 }
 
 void log_message(
@@ -44,14 +73,16 @@ void log_message(
   }
 
   char json_output[MAX_LOG_MESSAGE_SIZE];
-  snprintf_(
-    json_output,
-    sizeof(json_output),
-    "{\"level\":\"%s\",\"component\":\"%s\",\"message\":\"%s\"}\n",
-    log_level_to_string(level),
-    component,
-    message
-  );
+  char *json_ptr = json_output;
+
+  static jems_level_t jems_levels[JEMS_MAX_LEVEL];
+  jems_t jems;
+  jems_init(&jems, jems_levels, JEMS_MAX_LEVEL, jems_writer, (uintptr_t)&json_ptr);
+
+  create_json_log(&jems, level, component, message, NULL);
+
+  *json_ptr = '\n';
+  *(json_ptr + 1) = '\0';
 
   for (int i = 0; i < logger->num_writers; i++) {
     logger->writers[i](json_output);
@@ -65,30 +96,30 @@ void log_complex(
   const char *message,
   const char *json_data
 ) {
-  // Remove trailing newline from message if present
-  size_t msg_len = strlen(message);
+  // Copy message to cleaned_message, removing trailing newline if present
   char cleaned_message[MAX_LOG_MESSAGE_SIZE];
-
-  for (size_t i = 0; i < msg_len && i < MAX_LOG_MESSAGE_SIZE - 1; i++) {
+  size_t i;
+  for (i = 0; i < MAX_LOG_MESSAGE_SIZE - 1 && message[i] != '\0'; i++) {
     cleaned_message[i] = message[i];
   }
+  cleaned_message[i] = '\0';
 
-  cleaned_message[msg_len < MAX_LOG_MESSAGE_SIZE - 1 ? msg_len : MAX_LOG_MESSAGE_SIZE - 1] = '\0';
-
-  if (msg_len > 0 && cleaned_message[msg_len - 1] == '\n') {
-    cleaned_message[msg_len - 1] = '\0';
+  // Remove trailing newline if present
+  if (i > 0 && cleaned_message[i - 1] == '\n') {
+    cleaned_message[i - 1] = '\0';
   }
 
   char json_output[MAX_LOG_MESSAGE_SIZE];
-  snprintf_(
-    json_output,
-    sizeof(json_output),
-    "{\"level\":\"%s\",\"component\":\"%s\",\"message\":\"%s\",\"data\":%s}\n",
-    log_level_to_string(level),
-    component,
-    cleaned_message,
-    json_data
-  );
+  char *json_ptr = json_output;
+
+  static jems_level_t jems_levels[JEMS_MAX_LEVEL];
+  jems_t jems;
+  jems_init(&jems, jems_levels, JEMS_MAX_LEVEL, jems_writer, (uintptr_t)&json_ptr);
+
+  create_json_log(&jems, level, component, cleaned_message, json_data);
+
+  *json_ptr = '\n';
+  *(json_ptr + 1) = '\0';
 
   for (int i = 0; i < logger->num_writers; i++) {
     logger->writers[i](json_output);
