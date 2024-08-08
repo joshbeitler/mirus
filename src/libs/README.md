@@ -20,4 +20,4 @@ The third party libraries are not bundled in the repository, but are fetched and
 - libk
   - A collection of utility functions that are used by the kernel.
 - jems
-  - A form of the really excellent [`jems`](https://github.com/rdpoor/jems) library by rdpoor. Modified to work with the Mirus kernel environment.
+  - A form of the really excellent [`jems`](https://github.com/rdpoor/jems) library by rdpoor. Modified to work with the Mirus kernel environment (linking with `libk` and `printf` and matching API structure)
