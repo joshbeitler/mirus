@@ -104,17 +104,26 @@ static void log_memory_map_debug(
 ) {
   static jems_level_t jems_levels[JEMS_MAX_LEVEL];
   static jems_t jems;
-  char json_str[4096];  // Adjust size as needed
+
+  char buffer[64];
+  char json_str[4096];
   char *json_ptr = json_str;
 
   jems_init(&jems, jems_levels, JEMS_MAX_LEVEL, jems_writer, (uintptr_t)&json_ptr);
 
   jems_object_open(&jems);
 
-  jems_key_integer(&jems, "total_memory", total_memory);
-  jems_key_integer(&jems, "usable_memory", usable_memory);
-  jems_key_integer(&jems, "kernel_start", kernel_start);
-  jems_key_integer(&jems, "kernel_size", kernel_size);
+  format_memory_size(total_memory, buffer, sizeof(buffer));
+  jems_key_string(&jems, "total_memory", buffer);
+
+  format_memory_size(usable_memory, buffer, sizeof(buffer));
+  jems_key_string(&jems, "usable_memory", buffer);
+
+  snprintf_(buffer, sizeof(buffer), "0x%016llx", kernel_start);
+  jems_key_string(&jems, "kernel_start", buffer);
+
+  format_memory_size(kernel_size, buffer, sizeof(buffer));
+  jems_key_string(&jems, "kernel_size", buffer);
 
   jems_key_array_open(&jems, "entries");
 
@@ -122,9 +131,12 @@ static void log_memory_map_debug(
     struct limine_memmap_entry *entry = entries[i];
 
     jems_object_open(&jems);
-    jems_key_integer(&jems, "base", entry->base);
+
+    snprintf_(buffer, sizeof(buffer), "0x%016llx", entry->base);
+    jems_key_string(&jems, "base", buffer);
     jems_key_integer(&jems, "length", entry->length);
     jems_key_string(&jems, "type", get_memmap_type_string(entry->type));
+
     jems_object_close(&jems);
   }
 
@@ -173,20 +185,6 @@ void pmm_initialize(
     // entry->type describes the type of this memory region
     struct limine_memmap_entry *entry = entries[i];
 
-    // if (DEBUG) {
-    //   const char* entry_type = get_memmap_type_string(entry->type);
-
-    //   log_message(
-    //     &kernel_debug_logger,
-    //     LOG_DEBUG,
-    //     "memory_manager",
-    //     "    {base=0x%016llx, length=%s, type=%s}\n",
-    //     entry->base,
-    //     format_memory_size(entry->length, size_buffer, sizeof(size_buffer)),
-    //     entry_type
-    //   );
-    // }
-
     total_memory += entry->length;
 
     // Sum up usable memory
@@ -196,7 +194,13 @@ void pmm_initialize(
   }
 
   if (DEBUG) {
-    log_memory_map_debug(entry_count, entries, total_memory, usable_memory, kernel_start, kernel_size);
+    log_memory_map_debug(
+      entry_count,
+      entries,
+      total_memory,
+      usable_memory,
+      kernel_start,
+      kernel_size);
   }
 
   // Calculate total frames
