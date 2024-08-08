@@ -38,21 +38,21 @@ void idt_set_entry(int index, void *handler) {
 }
 
 void idt_initialize() {
-  log_message(&hal_logger, LOG_INFO, "  Building IDT entries\n");
+  log_message(&hal_logger, LOG_INFO, "idt", "Building IDT entries\n");
 
   memset((unsigned char *)&idt, 0, sizeof(idt)); // Clear whatever was there before
   for (int i = 0; i < IDT_ENTRIES; i++) {
     idt_set_entry(i, default_interrupt_handler);
   }
-  log_message(&hal_logger, LOG_INFO, "  Built %d IDT entries\n", IDT_ENTRIES);
+  log_message(&hal_logger, LOG_INFO, "idt", "Built %d IDT entries\n", IDT_ENTRIES);
 
-  log_message(&hal_logger, LOG_INFO, "  Loading IDT\n");
+  log_message(&hal_logger, LOG_INFO, "idt", "Loading IDT\n");
   idtr.limit = sizeof(idt) - 1;
   idtr.base = (uint64_t) &idt;
   idt_load(&idtr);
-  log_message(&hal_logger, LOG_INFO, "  IDT loaded\n");
+  log_message(&hal_logger, LOG_INFO, "idt", "IDT loaded\n");
 }
 
 void default_interrupt_handler(InterruptFrame* frame) {
-  log_message(&hal_logger, LOG_INFO, "Default interrupt handler hit\n");
+  log_message(&hal_logger, LOG_INFO, "idt", "Default interrupt handler hit\n");
 }

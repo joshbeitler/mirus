@@ -36,10 +36,12 @@ void terminal_initialize(
   terminal.cursor_y = 0;
   terminal.buffer_size = terminal.width * terminal.height;
 
+  // TODO: use jemi here :D
   if (DEBUG) {
     log_message(
       &kernel_debug_logger,
       LOG_INFO,
+      "drivers/terminal",
       "Initializing terminal {width=%d, height=%d, buffer_size=%d}\n",
       terminal.width,
       terminal.height,
@@ -165,6 +167,7 @@ void terminal_scroll() {
   terminal.cursor_y--;
 }
 
+// TODO: move to tests file
 void test_terminal() {
   // Test case 1: Multi-line string with different colors
   terminal_write_string("Test Case 1: Multi-line string with different colors\n");

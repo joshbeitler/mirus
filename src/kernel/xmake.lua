@@ -11,6 +11,7 @@ target("kernel")
     add_includedirs("$(projectdir)/src/libs/limine/include")
     add_includedirs("$(projectdir)/src/libs/ssfn/include")
     add_includedirs("$(projectdir)/src/libs/logger/include")
+    add_includedirs("$(projectdir)/src/libs/jems/include")
     add_includedirs("$(projectdir)/src/libs/printf")
     add_includedirs("$(projectdir)/src/kernel/include")
 
@@ -19,13 +20,12 @@ target("kernel")
     add_ldflags("-z max-page-size=0x1000", { force = true })
 
     add_deps("libk")
+    add_deps("jems")
     add_deps("printf")
     add_deps("hal")
     add_deps("logger")
     add_deps("limine")
     add_deps("ssfn")
-
-    --add_links("libk", "printf", "logger", "hal")
 
     -- Debug configuration (always on for now)
     add_cxflags("-DDEBUG=1")

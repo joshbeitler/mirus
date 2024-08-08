@@ -3,6 +3,7 @@
 
 #include <printf/printf.h>
 #include <limine/limine.h>
+#include <jems/jems.h>
 
 #include <hal/serial.h>
 
@@ -10,6 +11,8 @@
 #include <kernel/debug.h>
 #include <kernel/pmm.h>
 #include <kernel/buddy.h>
+
+#define JEMS_MAX_LEVEL 10
 
 // TODO: Finish memory size functions
 
@@ -84,6 +87,69 @@ static char* format_memory_size(uint64_t size, char* buffer, size_t buffer_size)
   return buffer;
 }
 
+/** testing the json log emitter */
+static void jems_writer(char ch, uintptr_t arg) {
+  char **buf = (char **)arg;
+  **buf = ch;
+  (*buf)++;
+}
+
+static void log_memory_map_debug(
+  uint64_t entry_count,
+  struct limine_memmap_entry **entries,
+  uint64_t total_memory,
+  uint64_t usable_memory,
+  uintptr_t kernel_start,
+  uint64_t kernel_size
+) {
+  static jems_level_t jems_levels[JEMS_MAX_LEVEL];
+  static jems_t jems;
+
+  char buffer[64];
+  char json_str[4096];
+  char *json_ptr = json_str;
+
+  jems_init(&jems, jems_levels, JEMS_MAX_LEVEL, jems_writer, (uintptr_t)&json_ptr);
+
+  jems_object_open(&jems);
+
+  format_memory_size(total_memory, buffer, sizeof(buffer));
+  jems_key_string(&jems, "total_memory", buffer);
+
+  format_memory_size(usable_memory, buffer, sizeof(buffer));
+  jems_key_string(&jems, "usable_memory", buffer);
+
+  snprintf_(buffer, sizeof(buffer), "0x%016llx", kernel_start);
+  jems_key_string(&jems, "kernel_start", buffer);
+
+  format_memory_size(kernel_size, buffer, sizeof(buffer));
+  jems_key_string(&jems, "kernel_size", buffer);
+
+  jems_key_array_open(&jems, "entries");
+
+  for (size_t i = 0; i < entry_count; i++) {
+    struct limine_memmap_entry *entry = entries[i];
+
+    jems_object_open(&jems);
+
+    snprintf_(buffer, sizeof(buffer), "0x%016llx", entry->base);
+    jems_key_string(&jems, "base", buffer);
+    jems_key_integer(&jems, "length", entry->length);
+    jems_key_string(&jems, "type", get_memmap_type_string(entry->type));
+
+    jems_object_close(&jems);
+  }
+
+  jems_array_close(&jems);
+  jems_object_close(&jems);
+
+  *json_ptr = '\0';  // Null-terminate the string
+
+  // Log the complex data
+  log_complex(&kernel_debug_logger, LOG_DEBUG, "memory_manager", "Memory Map", json_str);
+}
+/** end testing the json log emitter */
+
 void pmm_initialize(
   uint64_t entry_count,
   struct limine_memmap_entry **entries,
@@ -106,7 +172,8 @@ void pmm_initialize(
     log_message(
       &kernel_debug_logger,
       LOG_INFO,
-      "  Reading memory map\n",
+      "memory_manager",
+      "Reading memory map\n",
       format_memory_size(total_memory, size_buffer, sizeof(size_buffer))
     );
   }
@@ -118,25 +185,22 @@ void pmm_initialize(
     // entry->type describes the type of this memory region
     struct limine_memmap_entry *entry = entries[i];
 
-    if (DEBUG) {
-      const char* entry_type = get_memmap_type_string(entry->type);
-
-      log_message(
-        &kernel_debug_logger,
-        LOG_DEBUG,
-        "    {base=0x%016llx, length=%s, type=%s}\n",
-        entry->base,
-        format_memory_size(entry->length, size_buffer, sizeof(size_buffer)),
-        entry_type
-      );
-    }
-
     total_memory += entry->length;
 
     // Sum up usable memory
     if (entry->type == LIMINE_MEMMAP_USABLE) {
       usable_memory += entry->length;
     }
+  }
+
+  if (DEBUG) {
+    log_memory_map_debug(
+      entry_count,
+      entries,
+      total_memory,
+      usable_memory,
+      kernel_start,
+      kernel_size);
   }
 
   // Calculate total frames
@@ -159,28 +223,32 @@ void pmm_initialize(
     log_message(
       &kernel_debug_logger,
       LOG_INFO,
-      "  Total system memory: %s\n",
+      "memory_manager",
+      "Total system memory: %s\n",
       format_memory_size(total_memory, size_buffer, sizeof(size_buffer))
     );
 
     log_message(
       &kernel_debug_logger,
       LOG_INFO,
-      "  Usable system memory: %s\n",
+      "memory_manager",
+      "Usable system memory: %s\n",
       format_memory_size(usable_memory, size_buffer, sizeof(size_buffer))
     );
 
     log_message(
       &kernel_debug_logger,
       LOG_INFO,
-      "  Kernel address: %p\n",
+      "memory_manager",
+      "Kernel address: %p\n",
       kernel_start
     );
 
     log_message(
       &kernel_debug_logger,
       LOG_INFO,
-      "  Kernel size: %s\n",
+      "memory_manager",
+      "Kernel size: %s\n",
       format_memory_size(kernel_size, size_buffer, sizeof(size_buffer))
     );
   }

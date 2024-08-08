@@ -26,7 +26,7 @@ GdtSegmentDescriptor gdt_create_segment_descriptor(
 }
 
 void gdt_initialize(uintptr_t kernel_stack_ptr) {
-  log_message(&hal_logger, LOG_INFO, "  Building GDT entries\n");
+  log_message(&hal_logger, LOG_INFO, "gdt", "Building GDT entries\n");
 
   // Null descriptor
   gdt[0] = gdt_create_segment_descriptor(0, 0, 0x00, 0x0);
@@ -64,7 +64,7 @@ void gdt_initialize(uintptr_t kernel_stack_ptr) {
   );
 
   // Set up the TSS
-  log_message(&hal_logger, LOG_INFO, "  Building TSS entries\n");
+  log_message(&hal_logger, LOG_INFO, "gdt", "Building TSS entries\n");
   tss.iomap_base = sizeof(tss);
   tss.rsp[0] = kernel_stack_ptr;
 
@@ -89,21 +89,21 @@ void gdt_initialize(uintptr_t kernel_stack_ptr) {
     .limit_high_flags = 0,
     .base_high = 0
   };
-  log_message(&hal_logger, LOG_INFO, "  TSS entries built\n");
+  log_message(&hal_logger, LOG_INFO, "gdt", "TSS entries built\n");
 
-  log_message(&hal_logger, LOG_INFO, "  GDT entries built\n");
+  log_message(&hal_logger, LOG_INFO, "gdt", "GDT entries built\n");
 
-  log_message(&hal_logger, LOG_INFO, "  Loading GDT\n");
+  log_message(&hal_logger, LOG_INFO, "gdt", "Loading GDT\n");
   gdtr.limit = sizeof(gdt) - 1;
   gdtr.base = (uint64_t) &gdt;
   gdt_load(&gdtr);
-  log_message(&hal_logger, LOG_INFO, "  GDT loaded\n");
+  log_message(&hal_logger, LOG_INFO, "gdt", "GDT loaded\n");
 
-  log_message(&hal_logger, LOG_INFO, "  Reloading segments\n");
+  log_message(&hal_logger, LOG_INFO, "gdt", "Reloading segments\n");
   gdt_reload_segments();
-  log_message(&hal_logger, LOG_INFO, "  Segments reloaded\n");
+  log_message(&hal_logger, LOG_INFO, "gdt", "Segments reloaded\n");
 
-  log_message(&hal_logger, LOG_INFO, "  Loading TSS\n");
+  log_message(&hal_logger, LOG_INFO, "gdt", "Loading TSS\n");
   asm volatile("ltr %%ax" : : "a" (0x28)); // 0x28 is the offset of TSS in GDT (5 * 8)
-  log_message(&hal_logger, LOG_INFO, "  TSS loaded\n");
+  log_message(&hal_logger, LOG_INFO, "gdt", "TSS loaded\n");
 }
