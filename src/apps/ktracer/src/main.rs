@@ -1,10 +1,16 @@
+// Changes to make:
+// - Json formatting for data object
+// - Not tailing properly
+// - wrap cargo with xmake for build and run
+
 use std::fs::File;
 use std::io::{BufRead, BufReader, Seek, SeekFrom};
 use std::sync::mpsc::{channel, Receiver, Sender};
 use std::thread;
-use std::time::{Duration, SystemTime, UNIX_EPOCH};
+use std::time::Duration;
 
 use eframe::egui;
+use egui::Color32;
 use serde_json::Value;
 use structopt::StructOpt;
 
@@ -17,7 +23,6 @@ struct Opt {
 
 #[derive(Clone, Debug)]
 struct LogEntry {
-    timestamp: SystemTime,
     level: String,
     component: String,
     message: String,
@@ -46,6 +51,16 @@ impl LogViewer {
             self.log_entries.push(entry);
         }
     }
+
+    fn level_color(&self, level: &str) -> Color32 {
+        match level.to_lowercase().as_str() {
+            "info" => Color32::WHITE,
+            "warn" => Color32::from_rgb(255, 150, 0),
+            "error" => Color32::from_rgb(255, 0, 0),
+            "debug" => Color32::GRAY,
+            _ => Color32::WHITE,
+        }
+    }
 }
 
 impl eframe::App for LogViewer {
@@ -64,15 +79,14 @@ impl eframe::App for LogViewer {
                             .to_lowercase()
                             .contains(&self.search_term.to_lowercase())
                     {
-                        let label = format!(
-                            "{} [{}] {} - {}",
-                            format_time(entry.timestamp),
-                            entry.level,
-                            entry.component,
-                            entry.message
-                        );
+                        let label =
+                            format!("[{}] {} - {}", entry.level, entry.component, entry.message);
+                        let color = self.level_color(&entry.level);
                         if ui
-                            .selectable_label(self.selected_entry == Some(index), label)
+                            .selectable_label(
+                                self.selected_entry == Some(index),
+                                egui::RichText::new(label).color(color),
+                            )
                             .clicked()
                         {
                             self.selected_entry = Some(index);
@@ -87,14 +101,31 @@ impl eframe::App for LogViewer {
                 if let Some(entry) = self.log_entries.get(index) {
                     ui.heading("Log Entry Details");
                     ui.horizontal(|ui| {
-                        ui.label(format!("Timestamp: {}", format_time(entry.timestamp)));
-                        ui.label(format!("Level: {}", entry.level));
+                        ui.label(
+                            egui::RichText::new(format!("Level: {}", entry.level))
+                                .color(self.level_color(&entry.level)),
+                        );
                         ui.label(format!("Component: {}", entry.component));
                     });
                     ui.label(format!("Message: {}", entry.message));
                     if let Some(data) = &entry.data {
-                        ui.collapsing("Data", |ui| {
-                            ui.label(format_json(data));
+                        ui.group(|ui| {
+                            ui.label("Data:");
+                            egui::ScrollArea::vertical()
+                                .max_height(ui.available_height() - 20.0)
+                                .show(ui, |ui| {
+                                    let formatted_data = format_json(data);
+                                    let text_style = egui::TextStyle::Monospace;
+                                    let text_color = ui.style().visuals.text_color();
+                                    ui.add(
+                                        egui::TextEdit::multiline(&mut formatted_data.as_str())
+                                            .font(text_style)
+                                            .text_color(text_color)
+                                            .desired_width(f32::INFINITY)
+                                            .frame(false)
+                                            .interactive(true),
+                                    );
+                                });
                         });
                     }
                 }
@@ -107,20 +138,6 @@ impl eframe::App for LogViewer {
 
         ctx.request_repaint();
     }
-}
-
-fn format_time(time: SystemTime) -> String {
-    time.duration_since(UNIX_EPOCH)
-        .map(|d| {
-            let secs = d.as_secs();
-            format!(
-                "{:02}:{:02}:{:02}",
-                (secs / 3600) % 24,
-                (secs / 60) % 60,
-                secs % 60
-            )
-        })
-        .unwrap_or_else(|_| "Invalid time".to_string())
 }
 
 fn format_json(value: &Value) -> String {
@@ -147,7 +164,6 @@ fn parse_log_entry(line: &str) -> Option<LogEntry> {
     let obj = parsed.as_object()?;
 
     Some(LogEntry {
-        timestamp: SystemTime::now(),
         level: obj.get("level")?.as_str()?.to_string(),
         component: obj.get("component")?.as_str()?.to_string(),
         message: obj.get("message")?.as_str()?.to_string(),
