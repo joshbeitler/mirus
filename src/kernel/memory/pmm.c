@@ -3,7 +3,7 @@
 
 #include <printf/printf.h>
 #include <limine/limine.h>
-#include <jemi/jemi.h>
+#include <jems/jems.h>
 
 #include <hal/serial.h>
 
@@ -12,7 +12,7 @@
 #include <kernel/pmm.h>
 #include <kernel/buddy.h>
 
-#define JEMI_NODES_MAX 1000  // Adjust this based on expected maximum number of memory map entries
+#define JEMS_MAX_LEVEL 10
 
 // TODO: Finish memory size functions
 
@@ -87,8 +87,8 @@ static char* format_memory_size(uint64_t size, char* buffer, size_t buffer_size)
   return buffer;
 }
 
-/** testing the jemi log emitter */
-static void jemi_writer(char ch, void *arg) {
+/** testing the json log emitter */
+static void jems_writer(char ch, uintptr_t arg) {
   char **buf = (char **)arg;
   **buf = ch;
   (*buf)++;
@@ -102,51 +102,41 @@ static void log_memory_map_debug(
   uintptr_t kernel_start,
   uint64_t kernel_size
 ) {
-  static jemi_node_t node_pool[JEMI_NODES_MAX];
-  jemi_init(node_pool, JEMI_NODES_MAX);
+  static jems_level_t jems_levels[JEMS_MAX_LEVEL];
+  static jems_t jems;
+  char json_str[4096];  // Adjust size as needed
+  char *json_ptr = json_str;
 
-  // Create the entries array first
-  jemi_node_t *entries_array = jemi_array(NULL);
+  jems_init(&jems, jems_levels, JEMS_MAX_LEVEL, jems_writer, (uintptr_t)&json_ptr);
 
-  // Process each entry
+  jems_object_open(&jems);
+
+  jems_key_integer(&jems, "total_memory", total_memory);
+  jems_key_integer(&jems, "usable_memory", usable_memory);
+  jems_key_integer(&jems, "kernel_start", kernel_start);
+  jems_key_integer(&jems, "kernel_size", kernel_size);
+
+  jems_key_array_open(&jems, "entries");
+
   for (size_t i = 0; i < entry_count; i++) {
     struct limine_memmap_entry *entry = entries[i];
 
-    // Create a JSON object for this entry
-    jemi_node_t *entry_obj = jemi_object(
-      jemi_string("base"), jemi_integer(entry->base),
-      jemi_string("length"), jemi_integer(entry->length),
-      jemi_string("type"), jemi_string(get_memmap_type_string(entry->type)),
-      NULL
-    );
-
-    // Add the entry to the entries array
-    jemi_array_append(entries_array, entry_obj);
+    jems_object_open(&jems);
+    jems_key_integer(&jems, "base", entry->base);
+    jems_key_integer(&jems, "length", entry->length);
+    jems_key_string(&jems, "type", get_memmap_type_string(entry->type));
+    jems_object_close(&jems);
   }
 
-  // Create the root object for the memory map
-  jemi_node_t *root = jemi_object(
-    jemi_string("total_memory"), jemi_integer(total_memory),
-    jemi_string("usable_memory"), jemi_integer(usable_memory),
-    jemi_string("kernel_start"), jemi_integer(kernel_start),
-    jemi_string("kernel_size"), jemi_integer(kernel_size),
-    jemi_string("entries"), entries_array,
-    NULL
-  );
+  jems_array_close(&jems);
+  jems_object_close(&jems);
 
-  // Convert the jemi structure to a JSON string
-  char json_str[JEMI_NODES_MAX * 64];  // Adjust size as needed
-  char *json_ptr = json_str;
-  jemi_emit(root, jemi_writer, &json_ptr);
   *json_ptr = '\0';  // Null-terminate the string
 
   // Log the complex data
   log_complex(&kernel_debug_logger, LOG_DEBUG, "memory_manager", "Memory Map", json_str);
-
-  // Reset jemi for future use
-  jemi_reset();
 }
-/** end testing the jemi log emitter */
+/** end testing the json log emitter */
 
 void pmm_initialize(
   uint64_t entry_count,
