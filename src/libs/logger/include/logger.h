@@ -1,4 +1,5 @@
 #pragma once
+
 #include <stdarg.h>
 #include <stdbool.h>
 #include <stddef.h>
@@ -18,8 +19,8 @@ typedef void (*log_writer_t)(const char*);
 
 // Logger structure
 typedef struct {
-  log_writer_t *writers;  // Array of writer functions
-  int num_writers;        // Number of writers
+  log_writer_t *writers;
+  int num_writers;
 } logger_t;
 
 // Logger API
@@ -34,9 +35,5 @@ void log_stream_end(logger_t *logger);
 
 // Utility functions
 const char* log_level_to_string(log_level_t level);
-
-
-
-
 
 // TODO: new API entirely for streaming, based around putchar implementation as the writer

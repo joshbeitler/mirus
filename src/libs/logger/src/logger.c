@@ -2,9 +2,11 @@
 #include <stddef.h>
 #include <stdarg.h>
 #include <stdbool.h>
+
 #include <libk/string.h>
 #include <printf/printf.h>
 #include <jems/jems.h>
+
 #include <logger.h>
 
 #define JEMS_MAX_LEVEL 5  // Adjust this based on expected maximum nesting level
@@ -48,9 +50,11 @@ static void create_json_log(
   jems_key_string(jems, "level", log_level_to_string(level));
   jems_key_string(jems, "component", component);
   jems_key_string(jems, "message", message);
+
   if (include_data) {
     jems_key_literal(jems, "data", "", 0);  // Empty data field to be filled later
   }
+
   jems_object_close(jems);
 }
 
@@ -155,6 +159,7 @@ void log_complex(
   // Stream the json_data in chunks
   const char *data_ptr = json_data;
   size_t remaining = strlen(json_data);
+
   while (remaining > 0) {
     size_t chunk_size = (remaining > 900) ? 900 : remaining;
     log_stream_data(logger, data_ptr, chunk_size);
