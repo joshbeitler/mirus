@@ -67,7 +67,7 @@ void buddy_allocator_init(BuddyAllocator *allocator, uintptr_t start_address) {
   // Set start address
   allocator->start_address = start_address;
 
-  // Set bitmap to all free
+  // Set bitmap to all free (1)
   memset(allocator->bitmap, 0xFF, sizeof(allocator->bitmap));
 }
 
@@ -228,7 +228,7 @@ static void buddy_allocator_bitmap_to_json(BuddyAllocator *allocator) {
   char buffer[64];
 
   // Start the log stream
-  log_stream_start(&kernel_debug_logger, LOG_DEBUG, "memory_manager", "Buddy allocator bitmap state");
+  log_stream_start(&kernel_debug_logger, LOG_INFO, "memory_manager", "Buddy allocator bitmap state");
 
   jems_init(&jems, jems_levels, JEMS_MAX_LEVEL, jems_writer, (uintptr_t)&kernel_debug_logger);
   jems_object_open(&jems);
@@ -249,7 +249,7 @@ static void buddy_allocator_bitmap_to_json(BuddyAllocator *allocator) {
     jems_key_array_open(&jems, "blocks");
 
     for (int i = 0; i < blocks_in_order; i++) {
-      jems_integer(&jems, !buddy_allocator_test_bit(allocator->bitmap[order], i));
+      jems_integer(&jems, buddy_allocator_test_bit(allocator->bitmap[order], i));
     }
 
     jems_array_close(&jems);
