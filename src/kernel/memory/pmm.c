@@ -199,18 +199,19 @@ void pmm_initialize(
   // Calculate total frames
   total_frames = total_memory / PAGE_SIZE;
 
+  // Get first usable memory region address
+  uintptr_t usable_memory_start = 0;
+  for (size_t i = 0; i < entry_count; i++) {
+    struct limine_memmap_entry *entry = entries[i];
+
+    if (entry->type == LIMINE_MEMMAP_USABLE) {
+      usable_memory_start = entry->base;
+      break;
+    }
+  }
+
   // The bitmap needs to be initialized to all 1s (all memory is free)
-  buddy_allocator_init(&buddy_allocator, 0); // TODO: acutally initialize with address
-
-  // Memory mapping:
-
-  // 1. When the buddy allocator is initialized, it starts by viewing the entire manageable memory space as being composed of the largest possible free blocks (highest order).
-
-  // 2. In a real OS, you'd typically have a memory map (often provided by the bootloader) that tells you which regions of physical memory are usable.
-  // The physical memory manager would use this map to initialize the buddy allocator, marking unusable regions (like those reserved for hardware) as allocated from the start.
-
-  // 3. During initialization, the allocator marks all the highest-order blocks that fit within the physical memory as free.
-  // Any remaining memory that's smaller than the highest-order block size is handled as the next lower order, and so on, until all memory is accounted for.
+  buddy_allocator_init(&buddy_allocator, usable_memory_start);
 
   if (DEBUG) {
     log_message(
@@ -247,22 +248,12 @@ void pmm_initialize(
   }
 }
 
-// TODO: does this get replaced with kmalloc?
 uintptr_t pmm_alloc(size_t size) {
   return buddy_allocator_alloc(&buddy_allocator, size);
 }
 
-// TODO: does this get replaced with kfree?
 void pmm_free(uintptr_t address, size_t size) {
   buddy_allocator_free(&buddy_allocator, address, size);
-}
-
-size_t pmm_get_total_memory() {
-
-}
-
-size_t pmm_get_free_memory() {
-
 }
 
 void pmm_debug_print_state() {

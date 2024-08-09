@@ -41,16 +41,6 @@ uintptr_t pmm_alloc(size_t size);
 void pmm_free(uintptr_t addr, size_t size);
 
 /**
- * Get the total amount of physical memory
- */
-size_t pmm_get_total_memory();
-
-/**
- * Get the amount of free physical memory
- */
-size_t pmm_get_free_memory();
-
-/**
  * Print the current state of the memory manager, for debugging purposes
  */
 void pmm_debug_print_state();
