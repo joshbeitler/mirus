@@ -4,17 +4,17 @@ extern isr_handler
 %macro ISR_NOERRCODE 1
 global isr%1
 isr%1:
-    push 0                  ; Push dummy error code
-    push %1                 ; Push interrupt number
-    jmp isr_common_stub
+  push 0                  ; Push dummy error code
+  push %1                 ; Push interrupt number
+  jmp isr_common_stub
 %endmacro
 
 ; Macro for ISRs with error codes
 %macro ISR_ERRCODE 1
 global isr%1
 isr%1:
-    push %1                 ; Push interrupt number
-    jmp isr_common_stub
+  push %1                 ; Push interrupt number
+  jmp isr_common_stub
 %endmacro
 
 ; Define ISRs
@@ -53,50 +53,50 @@ ISR_NOERRCODE 31 ; Reserved
 
 ; Common ISR stub
 isr_common_stub:
-    ; Save all registers
-    push rax
-    push rbx
-    push rcx
-    push rdx
-    push rsi
-    push rdi
-    push rbp
-    push r8
-    push r9
-    push r10
-    push r11
-    push r12
-    push r13
-    push r14
-    push r15
+  ; Save all registers
+  push rax
+  push rbx
+  push rcx
+  push rdx
+  push rsi
+  push rdi
+  push rbp
+  push r8
+  push r9
+  push r10
+  push r11
+  push r12
+  push r13
+  push r14
+  push r15
 
-    ; Call C handler
-    mov rdi, rsp        ; Pointer to stack as first argument
-    mov rsi, [rsp + 120] ; Interrupt number as second argument (15 registers * 8 bytes = 120)
-    call isr_handler
+  ; Call C handler
+  mov rdi, rsp        ; Pointer to stack as first argument
+  mov rsi, [rsp + 120] ; Interrupt number as second argument (15 registers * 8 bytes = 120)
+  call isr_handler
 
-    ; Restore all registers
-    pop r15
-    pop r14
-    pop r13
-    pop r12
-    pop r11
-    pop r10
-    pop r9
-    pop r8
-    pop rbp
-    pop rdi
-    pop rsi
-    pop rdx
-    pop rcx
-    pop rbx
-    pop rax
+  ; Restore all registers
+  pop r15
+  pop r14
+  pop r13
+  pop r12
+  pop r11
+  pop r10
+  pop r9
+  pop r8
+  pop rbp
+  pop rdi
+  pop rsi
+  pop rdx
+  pop rcx
+  pop rbx
+  pop rax
 
-    ; Clean up stack
-    add rsp, 16     ; Remove error code and interrupt number
+  ; Clean up stack
+  add rsp, 16     ; Remove error code and interrupt number
 
-    ; Return from interrupt
-    iretq
+  ; Return from interrupt
+  iretq
 
 ; Export symbols
 global isr_common_stub
