@@ -7,141 +7,149 @@
 #include <kernel/panic.h>
 #include <kernel/debug.h>
 
-// TODO: use jemi for logging in debug mode
+// Declare ISR handlers
+extern void isr0();
+extern void isr1();
+extern void isr2();
+extern void isr3();
+extern void isr4();
+extern void isr5();
+extern void isr6();
+extern void isr7();
+extern void isr8();
+extern void isr9();
+extern void isr10();
+extern void isr11();
+extern void isr12();
+extern void isr13();
+extern void isr14();
+extern void isr15();
+extern void isr16();
+extern void isr17();
+extern void isr18();
+extern void isr19();
+extern void isr20();
+extern void isr21();
+extern void isr22();
+extern void isr23();
+extern void isr24();
+extern void isr25();
+extern void isr26();
+extern void isr27();
+extern void isr28();
+extern void isr29();
+extern void isr30();
+extern void isr31();
 
 void isr_initialize() {
   log_message(&kernel_debug_logger, LOG_INFO, "interrupts", "Registering ISRs\n");
 
-  idt_set_entry(0, isr_division_by_zero);
-  idt_set_entry(1, isr_debug_exception);
-  idt_set_entry(2, isr_non_maskable_interrupt_exception);
-  idt_set_entry(3, isr_breakpoint_exception);
-  idt_set_entry(4, isr_into_exception);
-  idt_set_entry(5, isr_out_of_bounds_exception);
-  idt_set_entry(6, isr_invalid_opcode_exception);
-  idt_set_entry(7, isr_device_not_available_exception);
-  idt_set_entry(8, isr_double_fault_exception);
-  idt_set_entry(9, isr_coprocessor_segment_overrun_exception);
-  idt_set_entry(10, isr_invalid_tss_exception);
-  idt_set_entry(11, isr_segment_not_present_exception);
-  idt_set_entry(12, isr_stack_fault_exception);
-  idt_set_entry(13, isr_general_protection_fault_exception);
-  idt_set_entry(14, isr_page_fault_exception);
-  idt_set_entry(15, isr_reserved_exception);
-  idt_set_entry(16, isr_floating_point_exception);
-  idt_set_entry(17, isr_alignment_check_exception);
-  idt_set_entry(18, isr_machine_check_exception);
-  idt_set_entry(19, isr_reserved_exception);
-  idt_set_entry(20, isr_reserved_exception);
-  idt_set_entry(21, isr_reserved_exception);
-  idt_set_entry(22, isr_reserved_exception);
-  idt_set_entry(23, isr_reserved_exception);
-  idt_set_entry(24, isr_reserved_exception);
-  idt_set_entry(25, isr_reserved_exception);
-  idt_set_entry(26, isr_reserved_exception);
-  idt_set_entry(27, isr_reserved_exception);
-  idt_set_entry(28, isr_reserved_exception);
-  idt_set_entry(29, isr_reserved_exception);
-  idt_set_entry(30, isr_reserved_exception);
-  idt_set_entry(31, isr_reserved_exception);
-  idt_set_entry(32, isr_reserved_exception);
+  idt_set_entry(0, isr0);
+  idt_set_entry(1, isr1);
+  idt_set_entry(2, isr2);
+  idt_set_entry(3, isr3);
+  idt_set_entry(4, isr4);
+  idt_set_entry(5, isr5);
+  idt_set_entry(6, isr6);
+  idt_set_entry(7, isr7);
+  idt_set_entry(8, isr8);
+  idt_set_entry(9, isr9);
+  idt_set_entry(10, isr10);
+  idt_set_entry(11, isr11);
+  idt_set_entry(12, isr12);
+  idt_set_entry(13, isr13);
+  idt_set_entry(14, isr14);
+  idt_set_entry(15, isr15);
+  idt_set_entry(16, isr16);
+  idt_set_entry(17, isr17);
+  idt_set_entry(18, isr18);
+  idt_set_entry(19, isr19);
+  idt_set_entry(20, isr20);
+  idt_set_entry(21, isr21);
+  idt_set_entry(22, isr22);
+  idt_set_entry(23, isr23);
+  idt_set_entry(24, isr24);
+  idt_set_entry(25, isr25);
+  idt_set_entry(26, isr26);
+  idt_set_entry(27, isr27);
+  idt_set_entry(28, isr28);
+  idt_set_entry(29, isr29);
+  idt_set_entry(30, isr30);
+  idt_set_entry(31, isr31);
 
-  log_message(&kernel_debug_logger, LOG_INFO, "interrupts", "Built %d IDT entries\n", IDT_ENTRIES);
-
+  log_message(&kernel_debug_logger, LOG_INFO, "interrupts", "Built IDT entries\n");
   log_message(&kernel_debug_logger, LOG_INFO, "interrupts", "Enabling interrupts\n");
   __asm__ volatile("sti");
   log_message(&kernel_debug_logger, LOG_INFO, "interrupts", "Interrupts enabled\n");
 }
 
-void isr_division_by_zero(InterruptFrame *frame, uint64_t error_code) {
-  kernel_panic("Division by zero error", frame);
+void isr_handler(InterruptFrame* frame, uint64_t interrupt_number) {
+  switch (interrupt_number) {
+    case 0:
+      kernel_panic("Division by zero error", frame);
+      break;
+    case 1:
+      kernel_panic("Debug exception", frame);
+      break;
+    case 2:
+      kernel_panic("Non-maskable interrupt exception", frame);
+      break;
+    case 3:
+      kernel_panic("Breakpoint exception", frame);
+      break;
+    case 4:
+      kernel_panic("Overflow exception", frame);
+      break;
+    case 5:
+      kernel_panic("Bound range exceeded exception", frame);
+      break;
+    case 6:
+      kernel_panic("Invalid opcode exception", frame);
+      break;
+    case 7:
+      kernel_panic("Device not available exception", frame);
+      break;
+    case 8:
+      kernel_panic("Double fault exception", frame);
+      break;
+    case 9:
+      kernel_panic("Coprocessor segment overrun exception", frame);
+      break;
+    case 10:
+      kernel_panic("Invalid TSS exception", frame);
+      break;
+    case 11:
+      kernel_panic("Segment not present exception", frame);
+      break;
+    case 12:
+      kernel_panic("Stack fault exception", frame);
+      break;
+    case 13:
+      kernel_panic("General protection fault exception", frame);
+      break;
+    case 14:
+      kernel_panic("Page fault exception", frame);
+      break;
+    case 16:
+      kernel_panic("x87 Floating point exception", frame);
+      break;
+    case 17:
+      kernel_panic("Alignment check exception", frame);
+      break;
+    case 18:
+      kernel_panic("Machine check exception", frame);
+      break;
+    case 19:
+      kernel_panic("SIMD Floating point exception", frame);
+      break;
+    case 20:
+      kernel_panic("Virtualization exception", frame);
+      break;
+    case 21:
+      kernel_panic("Control protection exception", frame);
+      break;
+    default:
+      kernel_panic("Reserved exception", frame);
+      break;
+  }
 }
-
-void isr_debug_exception(InterruptFrame *frame, uint64_t error_code) {
-  kernel_panic("Debug exception", frame);
-}
-
-void isr_non_maskable_interrupt_exception(InterruptFrame *frame, uint64_t error_code) {
-  kernel_panic("Non-maskable interrupt exception", frame);
-}
-
-void isr_breakpoint_exception(InterruptFrame *frame, uint64_t error_code) {
-  kernel_panic("Breakpoint exception", frame);
-}
-
-void isr_into_exception(InterruptFrame *frame, uint64_t error_code) {
-  kernel_panic("INTO detected overflow exception", frame);
-}
-
-void isr_out_of_bounds_exception(InterruptFrame *frame, uint64_t error_code) {
-  kernel_panic("Out of bounds exception", frame);
-}
-
-void isr_device_not_available_exception(InterruptFrame *frame, uint64_t error_code) {
-  kernel_panic("Device not available exception", frame);
-}
-
-void isr_invalid_opcode_exception(InterruptFrame *frame, uint64_t error_code) {
-  kernel_panic("Invalid opcode exception", frame);
-}
-
-void isr_double_fault_exception(InterruptFrame *frame, uint64_t error_code) {
-  kernel_panic("Double fault exception", frame);
-}
-
-void isr_coprocessor_segment_overrun_exception(InterruptFrame *frame, uint64_t error_code) {
-  kernel_panic("Coprocessor segment overrun", frame);
-}
-
-void isr_invalid_tss_exception(InterruptFrame *frame, uint64_t error_code) {
-  kernel_panic("Bad TSS exception", frame);
-}
-
-void isr_segment_not_present_exception(InterruptFrame *frame, uint64_t error_code) {
-  kernel_panic("Segment not present exception", frame);
-}
-
-void isr_stack_fault_exception(InterruptFrame *frame, uint64_t error_code) {
-  kernel_panic("Stack fault exception", frame);
-}
-
-void isr_general_protection_fault_exception(InterruptFrame *frame, uint64_t error_code) {
-  kernel_panic("General protection fault exception", frame);
-}
-
-void isr_page_fault_exception(InterruptFrame *frame, uint64_t error_code) {
-  kernel_panic("Page fault exception", frame);
-}
-
-void isr_floating_point_exception(InterruptFrame *frame, uint64_t error_code) {
-  kernel_panic("Floating point exception", frame);
-}
-
-void isr_alignment_check_exception(InterruptFrame *frame, uint64_t error_code) {
-  kernel_panic("Alignment check exception", frame);
-}
-
-void isr_machine_check_exception(InterruptFrame *frame, uint64_t error_code) {
-  kernel_panic("Machine check exception", frame);
-}
-
-void isr_reserved_exception(InterruptFrame *frame, uint64_t error_code) {
-  kernel_panic("Reserved exception", frame);
-}
-
-void isr_reserved(InterruptFrame *frame) {
-  kernel_panic("Reserved interrupt", frame);
-}
-
-// void generic_exception_handler(InterruptFrame* frame, uint64_t vector) {
-//   // Log or handle the exception
-//   // For example, print to a console or store the state for debugging
-//   // printf("Exception occurred! RIP: %p\n", (void*)frame->rip);
-//   log_message(
-//     &kernel_debug_logger,
-//     LOG_ERROR,
-//     "Exception triggered. Triggering kernel panic.\n"
-//   );
-
-//   kernel_panic(frame);
-// }

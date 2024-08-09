@@ -66,7 +66,7 @@ void _start(void) {
 
   // Ensure we got the kernel location
   if (kernel_address_request.response == NULL
-    || kernel_address_request.response->virtual_base == 0) {
+    || kernel_address_request.response->physical_base == 0) {
     log_message(&kernel_debug_logger, LOG_FATAL, "kernel", "Couldn't get kernel location\n");
     hcf();
   }
@@ -119,9 +119,9 @@ void _start(void) {
   log_message(&kernel_debug_logger, LOG_INFO, "kernel", "Successfully initialized physical memory manager\n");
 
   // Set up system calls
-  log_message(&kernel_debug_logger, LOG_INFO, "kernel", "Starting system call initialization\n");
-  syscalls_initialize();
-  log_message(&kernel_debug_logger, LOG_INFO, "kernel", "Successfully initialized system calls\n");
+  // log_message(&kernel_debug_logger, LOG_INFO, "kernel", "Starting system call initialization\n");
+  // syscalls_initialize();
+  // log_message(&kernel_debug_logger, LOG_INFO, "kernel", "Successfully initialized system calls\n");
 
   // We're done! Let the user know
   // TODO: This will eventually be replaced with a userspace jump to the
@@ -130,7 +130,27 @@ void _start(void) {
   printf_("Mirus, ahoy!\n\n");
 
   // test the pmm
-  debug_test_buddy_allocator();
+  // debug_test_buddy_allocator();
+  //
+  // Declare a pointer to an integer
+  // int *ptr;
+
+  // // Assign a specific, likely unmapped memory address to the pointer
+  // // This address is chosen arbitrarily and may need to be adjusted
+  // ptr = (int *)0xDEADBEEF;
+
+  // // Try to read from this address
+  // int value = *ptr;
+
+  // // If we somehow don't crash on read, try to write to it
+  // *ptr = 42;
+
+  // printf_("still alive\n");
+  //
+  volatile int a = 1;
+  volatile int b = 0;
+  volatile int c = a / b;
+  printf_("%d\n", c);
 
   // If we got here, just chill. Halt the CPU.
   hcf();

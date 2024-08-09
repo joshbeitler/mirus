@@ -40,12 +40,6 @@ static uintptr_t kernel_start, kernel_end;
 static uint64_t total_memory, usable_memory;
 static uint64_t total_frames;
 
-static BuddyAllocator buddy_allocator;
-
-// defines a series of buddy allocators to cover the entire system memory
-// #define BUDDY_ALLOCATOR_COUNT 1 // TODO: should be calculated based on system memory
-// static BuddyAllocator buddy_allocators[BUDDY_ALLOCATOR_COUNT];
-
 /**
  * Helper function to get a human-readable name for a memory map entry type
  *
@@ -154,7 +148,7 @@ void pmm_initialize(
   char size_buffer[64];
 
   // Calculate kernel_end using the file size from kernel_file_response
-  kernel_start = kernel_address_response->virtual_base;
+  kernel_start = kernel_address_response->physical_base;
   uint64_t kernel_size = kernel_file_response->kernel_file->size;
   kernel_end = kernel_start + kernel_size;
 
@@ -210,8 +204,7 @@ void pmm_initialize(
     }
   }
 
-  // The bitmap needs to be initialized to all 1s (all memory is free)
-  buddy_allocator_init(&buddy_allocator, usable_memory_start);
+  // Init allocator
 
   if (DEBUG) {
     log_message(
@@ -249,13 +242,10 @@ void pmm_initialize(
 }
 
 uintptr_t pmm_alloc(size_t size) {
-  return buddy_allocator_alloc(&buddy_allocator, size);
 }
 
 void pmm_free(uintptr_t address, size_t size) {
-  buddy_allocator_free(&buddy_allocator, address, size);
 }
 
 void pmm_debug_print_state() {
-  buddy_allocator_dump_bitmap(&buddy_allocator);
 }

@@ -21,6 +21,8 @@
  * figure out why.
  */
 void kernel_panic(const char* error_message, InterruptFrame* frame) {
+  log_message(&kernel_debug_logger, LOG_FATAL, "kernel", "Kernel panic encountered\n");
+
   terminal_clear();
   serial_write_string("[FATAL]   Kernel panic encountered\n");
 
