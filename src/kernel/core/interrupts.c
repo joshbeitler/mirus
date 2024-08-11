@@ -7,6 +7,13 @@
 #include <kernel/panic.h>
 #include <kernel/debug.h>
 
+// TODO: put somewhere else
+static uint64_t read_cr2() {
+  uint64_t value;
+  __asm__ volatile ("mov %%cr2, %0" : "=r" (value));
+  return value;
+}
+
 // Declare ISR handlers
 extern void isr0();
 extern void isr1();
@@ -128,7 +135,33 @@ void isr_handler(InterruptFrame* frame, uint64_t interrupt_number) {
       kernel_panic("General protection fault exception", frame);
       break;
     case 14:
-      kernel_panic("Page fault exception", frame);
+      uint64_t fault_address = read_cr2();
+      uint64_t error_code = frame->error_code;
+
+      const char* present = (error_code & 0x1) ? "present" : "not present";
+      const char* write = (error_code & 0x2) ? "write" : "read";
+      const char* user = (error_code & 0x4) ? "user" : "supervisor";
+      const char* reserved = (error_code & 0x8) ? "reserved write" : "not reserved write";
+      const char* instruction = (error_code & 0x10) ? "instruction fetch" : "not instruction fetch";
+
+      kernel_panic_detailed(
+        "Page Fault",
+        frame,
+        "A page fault occurred.\n"
+        "Faulting address: 0x%lX\n"
+        "Error code: 0x%lX\n"
+        "The fault was caused by a %s during a %s in %s mode.\n"
+        "The fault %s.\n"
+        "The fault %s.\n",
+        fault_address,
+        error_code,
+        write,
+        user,
+        present,
+        reserved,
+        instruction
+      );
+
       break;
     case 16:
       kernel_panic("x87 Floating point exception", frame);

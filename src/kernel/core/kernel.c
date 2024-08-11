@@ -129,6 +129,10 @@ void _start(void) {
   log_message(&kernel_debug_logger, LOG_INFO, "kernel", "Kernel initialization complete\n");
   printf_("Mirus, ahoy!\n\n");
 
+  // test page fault handler
+  int *ptr = (int*)0xdeadbeef;
+  *ptr = 0;
+
   // If we got here, just chill. Halt the CPU.
   hcf();
 }
