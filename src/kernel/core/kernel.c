@@ -130,8 +130,8 @@ void _start(void) {
   printf_("Mirus, ahoy!\n\n");
 
   // test page fault handler
-  int *ptr = (int*)0xdeadbeef;
-  *ptr = 0;
+  // int *ptr = (int*)0xdeadbeef;
+  // *ptr = 0;
 
   // If we got here, just chill. Halt the CPU.
   hcf();

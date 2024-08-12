@@ -15,8 +15,6 @@
 
 #define JEMS_MAX_LEVEL 10
 
-// TODO: Finish memory size functions
-
 /**
  * Human-readable names for memory map entry types
  */
@@ -38,7 +36,7 @@ static const char* const memmap_type_strings[] = {
  */
 static uintptr_t kernel_start, kernel_end;
 static uint64_t total_memory, usable_memory;
-static uint64_t total_frames;
+static uint64_t total_pages;
 
 /**
  * Helper function to get a human-readable name for a memory map entry type
@@ -191,7 +189,7 @@ void pmm_initialize(
   }
 
   // Calculate total frames
-  total_frames = total_memory / PAGE_SIZE;
+  total_pages = usable_memory / PAGE_SIZE;
 
   // Get first usable memory region address
   uintptr_t usable_memory_start = 0;
@@ -242,9 +240,11 @@ void pmm_initialize(
 }
 
 uintptr_t pmm_alloc(size_t size) {
+
 }
 
 void pmm_free(uintptr_t address, size_t size) {
+
 }
 
 void pmm_debug_print_state() {
