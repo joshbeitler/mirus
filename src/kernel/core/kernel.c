@@ -278,11 +278,9 @@ void _start(void) {
 		"kernel",
 		"Kernel initialization complete\n"
 	);
-	printf_("Mirus, ahoy!\n\n");
+	printf_("Mirus, ahoy!\n");
 
 	pmm_debug_print_state();
-
-	// debug_test_buddy_allocator();
 
 	// If we got here, just chill. Halt the CPU.
 	hcf();

@@ -24,9 +24,9 @@
  * SOFTWARE.
  */
 
- /**
-  * @brief a pure-C JSON serializer for embedded systems
-  */
+/**
+ * @brief a pure-C JSON serializer for embedded systems
+ */
 
 #ifndef _JEMS_H_
 #define _JEMS_H_
@@ -49,19 +49,19 @@ extern "C" {
 // Public types and definitions
 
 typedef struct {
-  size_t item_count;       // # of items emitted at this level
-  bool is_object;     // if true, use ':' separator
+	size_t item_count; // # of items emitted at this level
+	bool is_object;	   // if true, use ':' separator
 } jems_level_t;
 
 // Signature for the jems_emit function
 typedef void (*jems_writer_fn)(char ch, uintptr_t arg);
 
 typedef struct _jems {
-  jems_level_t *levels;
-  size_t max_level;
-  size_t curr_level;
-  jems_writer_fn writer;
-  uintptr_t arg;
+	jems_level_t *levels;
+	size_t max_level;
+	size_t curr_level;
+	jems_writer_fn writer;
+	uintptr_t arg;
 } jems_t;
 
 // *****************************************************************************
@@ -86,11 +86,13 @@ typedef struct _jems {
  * @param writer A function that takes one char arg and renders it.
  * @param arg User-supplied argument passed to the writer function.
  */
-jems_t *jems_init(jems_t *jems,
-                  jems_level_t *levels,
-                  size_t max_level,
-                  jems_writer_fn writer,
-                  uintptr_t arg);
+jems_t *jems_init(
+	jems_t *jems,
+	jems_level_t *levels,
+	size_t max_level,
+	jems_writer_fn writer,
+	uintptr_t arg
+);
 
 /**
  * @brief Reset to top level.
@@ -196,7 +198,9 @@ jems_t *jems_key_string(jems_t *jems, const char *key, const char *string);
 /**
  * @brief Emit a string key followed by a string of bytes in JSON string format.
  */
-jems_t *jems_key_bytes(jems_t *jems, const char *key, const uint8_t *bytes, size_t length);
+jems_t *jems_key_bytes(
+	jems_t *jems, const char *key, const uint8_t *bytes, size_t length
+);
 
 /**
  * @brief Emit a string key followed by boolean (true or false).
@@ -221,7 +225,9 @@ jems_t *jems_key_null(jems_t *jems, const char *key);
 /**
  * @brief Emit a string key followed by a literal string verbatim (no quotes)
  */
-jems_t *jems_key_literal(jems_t *jems, const char *key, const char *literal, size_t n_bytes);
+jems_t *jems_key_literal(
+	jems_t *jems, const char *key, const char *literal, size_t n_bytes
+);
 
 /**
  * @brief Return the current expression depth.
