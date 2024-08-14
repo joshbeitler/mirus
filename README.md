@@ -1,6 +1,6 @@
 <img src="docs/logo.png" width="150px" style="text-align:center">
 
-# Mirus
+# Mirus [![clang-format Check](https://github.com/joshbeitler/mirus/actions/workflows/clang-format-check.yml/badge.svg)](https://github.com/joshbeitler/mirus/actions/workflows/clang-format-check.yml)
 
 Mirus is a hobby operating system project, written in C. It is not intended to
 be a production operating system, but rather a learning experience and a fun
