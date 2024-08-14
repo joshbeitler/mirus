@@ -8,11 +8,11 @@ can start on implementing the managed runtime, which is where we will jump to.
 
 - [-] memory management
   - [-] physical memory manager
-    - [ ] put memory map in own file
     - [-] buddy allocator
-      - [ ] Support detailed logging of buddy allocator frame to debug log (full bitmap dump
+      - [x] Support detailed logging of buddy allocator frame to debug log (full bitmap dump
       - [ ] Support entire system memory by using a series of buddy allocators
     - [ ] Preserve special memory areas (ACPI, kernel, framebuffer, etc) in buddy allocator init
+      - [ ] PMM should use all available memory
     - [ ] Implement a slab allocator for small objects
   - [ ] kmalloc / kfree
   - [ ] virtual memory manager/paging
@@ -35,17 +35,7 @@ can start on implementing the managed runtime, which is where we will jump to.
   - [ ] debugging
   - [ ] managed userspace white paper
   - [ ] system call interface
-- [ ] code formatter?
 - [ ] .editorconfig?
-- [ ] switch to zig
-  - [ ] kernel
-  - [ ] libs
-    - [ ] printf (do we need this with zig?)
-    - [ ] libk
-    - [ ] ssfn
-    - [ ] limine
-  - [ ] hal
-  - [ ] build system
 - [ ] servers
   - [ ] display compositor/window manager
     - [ ] framebuffer in userspace
@@ -64,3 +54,4 @@ can start on implementing the managed runtime, which is where we will jump to.
 - [ ] port libc
 - [ ] threads
 - [ ] scheduler
+- [x] code formatter?
