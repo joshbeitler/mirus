@@ -148,7 +148,7 @@ void isr_handler(InterruptFrame* frame, uint64_t interrupt_number) {
         "Page Fault",
         frame,
         "A page fault occurred.\n"
-        "Faulting address: 0x%lX\n"
+        "Faulting address: 0x%016llx\n"
         "Error code: 0x%lX\n"
         "The fault was caused by a %s during a %s in %s mode.\n"
         "The fault %s.\n"

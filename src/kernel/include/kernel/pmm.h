@@ -1,7 +1,7 @@
 #pragma once
 
-#include <stdint.h>
 #include <stddef.h>
+#include <stdint.h>
 
 #include <limine/limine.h>
 
@@ -13,12 +13,15 @@
  * @param kernel_address_response Pointer to the kernel address response
  * @param kernel_file_response Pointer to the kernel file response. Used to get
  *        the kernel file size.
+ * @param hhdm_response Pointer to the HHDM response. Used to get the HHDM
+ *        offset.
  */
 void pmm_initialize(
-  uint64_t entry_count,
-  struct limine_memmap_entry **entries,
-  struct limine_kernel_address_response *kernel_address_response,
-  struct limine_kernel_file_response *kernel_file_response
+	uint64_t entry_count,
+	struct limine_memmap_entry **entries,
+	struct limine_kernel_address_response *kernel_address_response,
+	struct limine_kernel_file_response *kernel_file_response,
+	struct limine_hhdm_response *hhdm_response // not ideal to pass here
 );
 
 /**
@@ -27,7 +30,7 @@ void pmm_initialize(
  *
  * @param size Size of the block to allocate
  *
- * @return The physical address of the allocated block
+ * @return The address of the allocated block
  */
 uintptr_t pmm_alloc(size_t size);
 
@@ -35,10 +38,9 @@ uintptr_t pmm_alloc(size_t size);
  * Free a previously allocated block of physical memory. We use a buddy
  * allocator to manage physical memory.
  *
- * @param addr Physical address of the block to free
- * @param size Size of the block to free
+ * @param addr Address of the block to free
  */
-void pmm_free(uintptr_t addr, size_t size);
+void pmm_free(uintptr_t addr);
 
 /**
  * Print the current state of the memory manager, for debugging purposes

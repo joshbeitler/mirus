@@ -39,7 +39,6 @@ static const char *const memmap_type_strings[] = {
  */
 static uintptr_t kernel_start, kernel_end;
 static uint64_t total_memory, usable_memory;
-static uint64_t total_pages;
 
 /**
  * Helper function to get a human-readable name for a memory map entry type
@@ -166,7 +165,8 @@ void pmm_initialize(
 	uint64_t entry_count,
 	struct limine_memmap_entry **entries,
 	struct limine_kernel_address_response *kernel_address_response,
-	struct limine_kernel_file_response *kernel_file_response
+	struct limine_kernel_file_response *kernel_file_response,
+	struct limine_hhdm_response *hhdm_response
 ) {
 	total_memory = 0;
 	usable_memory = 0;
@@ -216,28 +216,37 @@ void pmm_initialize(
 		);
 	}
 
-	// Calculate total frames
-	total_pages = usable_memory / PAGE_SIZE;
+	// Get first usable memory region address
+	uintptr_t usable_memory_start = 0;
+	size_t usable_memory_pool_size = 0;
 
-  // Get first usable memory region address
-  uintptr_t usable_memory_start = 0;
-  size_t usable_memory_pool_size = 0;
-  for (size_t i = 0; i < entry_count; i++) {
-    struct limine_memmap_entry *entry = entries[i];
+	for (size_t i = 0; i < entry_count; i++) {
+		struct limine_memmap_entry *entry = entries[i];
 
-    if (entry->type == LIMINE_MEMMAP_USABLE) {
-      usable_memory_start = entry->base;
-      usable_memory_pool_size = entry->length;
-      break;
-    }
-  }
+		if (entry->type == LIMINE_MEMMAP_USABLE) {
+			usable_memory_start = entry->base;
+			usable_memory_pool_size = entry->length;
+			break;
+		}
+	}
 
-  // Init allocator
-  buddy_allocator_init(
-    &buddy_allocator,
-    usable_memory_start,
-    usable_memory_pool_size
-  );
+	uintptr_t buddy_allocator_base_virt =
+		(uintptr_t)phys_to_virt(usable_memory_start, hhdm_response->offset);
+
+	log_message(
+		&kernel_debug_logger,
+		LOG_INFO,
+		"memory_manager",
+		"buddy allocator phys: 0x%016llx, virt: 0x%016llx, offset: %llu\n",
+		usable_memory_start,
+		buddy_allocator_base_virt,
+		hhdm_response->offset
+	);
+
+	// Init allocator
+	buddy_allocator_init(
+		&buddy_allocator, buddy_allocator_base_virt, usable_memory_pool_size
+	);
 
 	if (DEBUG) {
 		log_message(
@@ -274,8 +283,12 @@ void pmm_initialize(
 	}
 }
 
-uintptr_t pmm_alloc(size_t size) {}
+uintptr_t pmm_alloc(size_t size) {
+	return buddy_allocator_allocate(&buddy_allocator, size);
+}
 
-void pmm_free(uintptr_t address, size_t size) {}
+void pmm_free(uintptr_t address) {
+	buddy_allocator_free(&buddy_allocator, address);
+}
 
-void pmm_debug_print_state() {}
+void pmm_debug_print_state() { buddy_allocator_debug_state(&buddy_allocator); }
