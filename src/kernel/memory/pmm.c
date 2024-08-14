@@ -15,6 +15,8 @@
 
 #define JEMS_MAX_LEVEL 10
 
+static BuddyAllocator buddy_allocator;
+
 /**
  * Human-readable names for memory map entry types
  */
@@ -217,18 +219,25 @@ void pmm_initialize(
 	// Calculate total frames
 	total_pages = usable_memory / PAGE_SIZE;
 
-	// Get first usable memory region address
-	uintptr_t usable_memory_start = 0;
-	for (size_t i = 0; i < entry_count; i++) {
-		struct limine_memmap_entry *entry = entries[i];
+  // Get first usable memory region address
+  uintptr_t usable_memory_start = 0;
+  size_t usable_memory_pool_size = 0;
+  for (size_t i = 0; i < entry_count; i++) {
+    struct limine_memmap_entry *entry = entries[i];
 
-		if (entry->type == LIMINE_MEMMAP_USABLE) {
-			usable_memory_start = entry->base;
-			break;
-		}
-	}
+    if (entry->type == LIMINE_MEMMAP_USABLE) {
+      usable_memory_start = entry->base;
+      usable_memory_pool_size = entry->length;
+      break;
+    }
+  }
 
-	// Init allocator
+  // Init allocator
+  buddy_allocator_init(
+    &buddy_allocator,
+    usable_memory_start,
+    usable_memory_pool_size
+  );
 
 	if (DEBUG) {
 		log_message(

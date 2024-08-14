@@ -127,7 +127,7 @@ void _start(void) {
   // TODO: This will eventually be replaced with a userspace jump to the
   //       init process.
   log_message(&kernel_debug_logger, LOG_INFO, "kernel", "Kernel initialization complete\n");
-  printf_("Mirus, ahoy!\n\n");
+  printf_("Mirus, ahoy!\n");
 
   // test page fault handler
   // int *ptr = (int*)0xdeadbeef;
