@@ -9,15 +9,18 @@
 #define PAGE_SIZE 4096
 
 /**
- * Page read/write flags
+ * Read the value of the CR2 register
  */
-#define PAGE_PRESENT (1 << 0)
-#define PAGE_WRITABLE (1 << 1)
+static inline uint64_t read_cr2() {
+	uint64_t value;
+	__asm__ volatile("mov %%cr2, %0" : "=r"(value));
+	return value;
+}
 
+/**
+ * Convert a virtual address to a physical address using the higher-half direct
+ * memory offset we get from the bootloader
+ */
 static inline void *phys_to_virt(uint64_t phys, uint64_t hhdm_offset) {
 	return (void *)(phys + hhdm_offset);
 }
-
-// static inline uintptr_t virt_to_phys(void *virt_addr) {
-// 	return (uintptr_t)virt_addr - hhdm_offset;
-// }

@@ -6,13 +6,7 @@
 #include <kernel/debug.h>
 #include <kernel/interrupts.h>
 #include <kernel/panic.h>
-
-// TODO: put somewhere else
-static uint64_t read_cr2() {
-	uint64_t value;
-	__asm__ volatile("mov %%cr2, %0" : "=r"(value));
-	return value;
-}
+#include <kernel/paging.h>
 
 // Declare ISR handlers
 extern void isr0();
