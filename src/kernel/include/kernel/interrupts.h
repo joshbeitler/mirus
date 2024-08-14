@@ -1,7 +1,7 @@
 #pragma once
 
-#include <stdint.h>
 #include <stddef.h>
+#include <stdint.h>
 
 #include <hal/idt.h>
 
@@ -13,4 +13,4 @@ void isr_initialize();
 /**
  * Common interrupt handler routine (called from assembly)
  */
-void isr_handler(InterruptFrame* frame, uint64_t interrupt_number);
+void isr_handler(InterruptFrame *frame, uint64_t interrupt_number);

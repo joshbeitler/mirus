@@ -1,7 +1,7 @@
 #pragma once
 
-#include <stdint.h>
 #include <stddef.h>
+#include <stdint.h>
 
 #define COM1 0x3F8
 #define COM2 0x2F8
@@ -19,10 +19,10 @@
  * @return Value of port
  */
 static inline unsigned char read_byte(unsigned short port) {
-  unsigned char rv;
-  asm volatile("inb %1, %0" : "=a" (rv) : "dN" (port));
+	unsigned char rv;
+	asm volatile("inb %1, %0" : "=a"(rv) : "dN"(port));
 
-  return rv;
+	return rv;
 }
 
 /**
@@ -32,7 +32,7 @@ static inline unsigned char read_byte(unsigned short port) {
  * @param data Data to write
  */
 static inline void write_byte(unsigned short port, unsigned char data) {
-  asm volatile("outb %1, %0" : : "dN" (port), "a" (data));
+	asm volatile("outb %1, %0" : : "dN"(port), "a"(data));
 }
 
 void serial_initialize();
@@ -40,5 +40,5 @@ char serial_read();
 int serial_recieved();
 int serial_is_transmit_empty();
 void serial_write_char(char c);
-void serial_write_string(const char* str);
+void serial_write_string(const char *str);
 void serial_write_int(int i);

@@ -1,9 +1,9 @@
 #pragma once
 
-#include <stdint.h>
-#include <stddef.h>
-#include <stdbool.h>
 #include <stdarg.h>
+#include <stdbool.h>
+#include <stddef.h>
+#include <stdint.h>
 
 /**
  * Total number of system calls. Increment each time a new system call is added.
@@ -14,45 +14,45 @@
  * Human-readable system call names
  */
 typedef enum {
-  SYSCALL_READ = 0,
-  SYSCALL_WRITE = 1,
+	SYSCALL_READ = 0,
+	SYSCALL_WRITE = 1,
 } SystemCallNumber;
 
 /**
  * System call error codes
  */
 typedef enum {
-  SYSCALL_SUCCESS = 0,
-  SYSCALL_ERROR_INVALID_SYSCALL = -1,
-  SYSCALL_ERROR_INVALID_ARGS = -2,
-  SYSCALL_ERROR_PERMISSION_DENIED = -3,
-  SYSCALL_ERROR_NOT_IMPLEMENTED = -4,
+	SYSCALL_SUCCESS = 0,
+	SYSCALL_ERROR_INVALID_SYSCALL = -1,
+	SYSCALL_ERROR_INVALID_ARGS = -2,
+	SYSCALL_ERROR_PERMISSION_DENIED = -3,
+	SYSCALL_ERROR_NOT_IMPLEMENTED = -4,
 } SystemCallError;
 
 /**
  * Syscall argument structure. System calls support up to 6 arguments according
-  * to the x86-64 calling convention.
+ * to the x86-64 calling convention.
  */
 typedef struct {
-  uint64_t args[6];
+	uint64_t args[6];
 } SystemCallArgs;
 
 /**
  * Possible system call argument types
  */
 typedef enum {
-  ARG_INT,
-  ARG_UINT,
-  ARG_PTR,
-  ARG_SIZE,
+	ARG_INT,
+	ARG_UINT,
+	ARG_PTR,
+	ARG_SIZE,
 } SystemCallArgType;
 
 /**
  * Allows system calls to return a value and an error code simultaneously.
  */
 typedef struct {
-  int64_t value;
-  SystemCallError error;
+	int64_t value;
+	SystemCallError error;
 } SystemCallReturn;
 
 /**
@@ -61,26 +61,26 @@ typedef struct {
  * @param args The arguments passed to the system call
  * @return The return value of the system call
  */
- typedef SystemCallReturn (*SystemCallHandler)(SystemCallArgs*);
+typedef SystemCallReturn (*SystemCallHandler)(SystemCallArgs *);
 
 /**
  * Represents a single entry in the syscall table
  */
 typedef struct {
-  SystemCallHandler handler;
-  const char* name;
-  uint8_t num_args;
+	SystemCallHandler handler;
+	const char *name;
+	uint8_t num_args;
 } SystemCallEntry;
 
 /**
  * Helper function used during debug logging to format system call arguments
  */
-char* format_syscall_args(const SystemCallArgs* args, int num_args);
+char *format_syscall_args(const SystemCallArgs *args, int num_args);
 
 /**
  * Validates the types of arguments passed to a system call
  */
-bool syscall_validate_args(const SystemCallArgs* args, int num_args, ...);
+bool syscall_validate_args(const SystemCallArgs *args, int num_args, ...);
 
 /**
  * Dispatches a system call to the appropriate handler
@@ -89,10 +89,8 @@ bool syscall_validate_args(const SystemCallArgs* args, int num_args, ...);
  * @param args The arguments passed to the system call
  * @return The return value of the system call
  */
-__attribute__((hot)) SystemCallReturn syscall_handler(
-  SystemCallNumber syscall_number,
-  SystemCallArgs* args
-);
+__attribute__((hot)) SystemCallReturn
+syscall_handler(SystemCallNumber syscall_number, SystemCallArgs *args);
 
 /**
  * Assembly function that calls the syscall_handler function once the syscall
@@ -108,8 +106,8 @@ void syscalls_initialize();
 /**
  * Macro for defining a system call handler
  */
-#define DEFINE_SYSCALL(name, num_args, ...) \
-    SystemCallReturn syscall_##name(SystemCallArgs* args)
+#define DEFINE_SYSCALL(name, num_args, ...)                                    \
+	SystemCallReturn syscall_##name(SystemCallArgs *args)
 
 /*
  * ============================================================================
@@ -126,7 +124,6 @@ void syscalls_initialize();
  * @return The number of bytes read, or -1 on error
  */
 DEFINE_SYSCALL(read, 3, ARG_INT, ARG_PTR, ARG_SIZE);
-
 
 /**
  * Writes data from to file descriptor
