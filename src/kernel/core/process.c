@@ -1,11 +1,14 @@
 #include <kernel/process.h>
 #include <kernel/debug.h>
 
+// TODO: use jemi for logging
+
 void jump_to_usermode(void* user_function, void* user_stack) {
   if (DEBUG) {
     log_message(
       &kernel_debug_logger,
       LOG_INFO,
+      "process",
       "Jumping to usermode {entry=%p, user_stack=%p}\n",
       user_function,
       user_stack

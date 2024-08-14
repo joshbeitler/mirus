@@ -6,13 +6,20 @@ We are ready to jump to user mode, but we now need to implement memory
 management and a few other things before we can do that. Once that is done, we
 can start on implementing the managed runtime, which is where we will jump to.
 
-- [ ] memory management
-  - [ ] physical memory manager
+- [-] memory management
+  - [-] physical memory manager
+    - [ ] put memory map in own file
+    - [-] buddy allocator
+      - [ ] Support detailed logging of buddy allocator frame to debug log (full bitmap dump
+      - [ ] Support entire system memory by using a series of buddy allocators
+    - [ ] Preserve special memory areas (ACPI, kernel, framebuffer, etc) in buddy allocator init
+    - [ ] Implement a slab allocator for small objects
   - [ ] kmalloc / kfree
   - [ ] virtual memory manager/paging
 - [ ] mirus runtime
   - [ ] wasm VM
   - [-] syscalls
+    - [ ] memory management syscalls
   - [ ] userspace runtime library
   - [x] TSS
   - [ ] processes

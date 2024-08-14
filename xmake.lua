@@ -20,10 +20,6 @@ toolchain("clang-cross")
     add_cxflags("-fno-stack-protector")
     add_cxflags("-fno-stack-check")
     add_cxflags("-fPIE")
-    add_cxflags("-mno-80387")
-    add_cxflags("-mno-mmx")
-    add_cxflags("-mno-sse")
-    add_cxflags("-mno-sse2")
     add_cxflags("-mno-red-zone")
     add_cxflags("-fno-builtin")
     add_cxflags("-nostdlib")
@@ -41,11 +37,10 @@ includes("src/hal")
 includes("src/libs/libk")
 includes("src/libs/limine")
 includes("src/libs/ssfn")
+includes("src/libs/jems")
 includes("src/libs/logger")
 includes("src/libs/printf")
 includes("src/kernel")
-
-includes("src/apps/hello")
 
 task("make-iso")
     set_category("build")
@@ -131,14 +126,17 @@ task("run-qemu-uefi")
         -- Path to the OVMF BIOS file
         local ovmf_path = path.join(os.projectdir(), "meta", "OVMF_CODE.fd")
 
+        -- Delete old log file
+        os.tryrm("kdebug.json")
+
         -- Construct the QEMU command
         local qemu_cmd = string.format(
-            "qemu-system-x86_64 -M q35 -m 2G -bios %s -cdrom %s -boot d -serial stdio -d int,cpu_reset,in_asm -D qemu.log -no-reboot -no-shutdown",
+            "qemu-system-x86_64 -chardev stdio,id=char0,logfile=kdebug.json -M q35 -m 2G -bios %s -cdrom %s -boot d -serial chardev:char0 -d int,cpu_reset,in_asm -D qemu.log -no-reboot -no-shutdown",
             ovmf_path,
             iso_file
          )
         --local qemu_cmd = string.format(
-        --    "qemu-system-x86_64 -M q35 -m 2G -bios %s -cdrom %s -boot d -serial stdio -d int,cpu_reset,in_asm -D qemu.log -no-reboot -no-shutdown -s -S",
+        --    "qemu-system-x86_64 -chardev stdio,id=char0,logfile=kdebug.json -M q35 -m 2G -bios %s -cdrom %s -boot d -serial chardev:char0 -d int,cpu_reset,in_asm -D qemu.log -no-reboot -no-shutdown -s -S",
         --    ovmf_path,
         --    iso_file
         --)

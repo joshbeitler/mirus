@@ -10,6 +10,8 @@
 #include <kernel/syscalls.h>
 #include <kernel/debug.h>
 
+// TODO: use jemi for logging
+
 /*
  * ============================================================================
  * System call definitions
@@ -62,7 +64,7 @@ static const SystemCallEntry syscall_table[SYSCALL_COUNT] = {
 // TODO: Not thread safe due to static buffer
 // TODO: Treats all argument types as hexedecimal. Add special conditions for
 //       other types.
-static char* format_syscall_args(const SystemCallArgs* args, int num_args) {
+char* format_syscall_args(const SystemCallArgs* args, int num_args) {
   static char arg_str[256];
   memset(arg_str, 0, sizeof(arg_str));
 
@@ -117,6 +119,7 @@ SystemCallReturn syscall_handler(
     log_message(
       &kernel_debug_logger,
       LOG_DEBUG,
+      "syscalls",
       "System call entered: {number=%d}\n",
       syscall_number
     );
@@ -128,7 +131,8 @@ SystemCallReturn syscall_handler(
       log_message(
         &kernel_debug_logger,
         LOG_ERROR,
-        "  Invalid system call: No system call found\n",
+        "syscalls",
+        "Invalid system call: No system call found\n",
         syscall_number
       );
     }
@@ -144,7 +148,8 @@ SystemCallReturn syscall_handler(
       log_message(
         &kernel_debug_logger,
         LOG_ERROR,
-        "  Invalid system call: Too many arguments\n"
+        "syscalls",
+        "Invalid system call: Too many arguments\n"
       );
     }
 
@@ -157,7 +162,8 @@ SystemCallReturn syscall_handler(
     log_message(
       &kernel_debug_logger,
       LOG_DEBUG,
-      "  Dispatching system call: {name=%s, args={%s}}\n",
+      "syscalls",
+      "Dispatching system call: {name=%s, args={%s}}\n",
       syscall_table[syscall_number].name,
       formatted_args
     );
@@ -169,7 +175,8 @@ SystemCallReturn syscall_handler(
     log_message(
       &kernel_debug_logger,
       LOG_DEBUG,
-      "  System call completed: {return=%lld, error=%d}\n",
+      "syscalls",
+      "System call completed: {return=%lld, error=%d}\n",
       result.value,
       result.error
     );
@@ -229,7 +236,7 @@ __attribute__((naked)) void syscall_entry() {
 
 void syscalls_initialize() {
   // Set up MSRs for syscall
-  log_message(&kernel_debug_logger, LOG_INFO, "  Enabling syscall MSRs\n");
+  log_message(&kernel_debug_logger, LOG_INFO, "syscalls", "Enabling syscall MSRs\n");
 
   uint64_t star = (uint64_t)0x0013000800000000ULL;
   uint64_t lstar = (uint64_t)syscall_entry;
@@ -239,19 +246,19 @@ void syscalls_initialize() {
   asm volatile ("wrmsr" : : "c" (0xC0000082), "a" ((uint32_t)lstar), "d" ((uint32_t)(lstar >> 32)));
   asm volatile ("wrmsr" : : "c" (0xC0000084), "a" ((uint32_t)sfmask), "d" ((uint32_t)(sfmask >> 32)));
 
-  log_message(&kernel_debug_logger, LOG_INFO, "  Enabled syscall MSRs\n");
+  log_message(&kernel_debug_logger, LOG_INFO, "syscalls", "Enabled syscall MSRs\n");
 
   // Enable syscall instruction
-  log_message(&kernel_debug_logger, LOG_INFO, "  Enabling syscall instruction in EFER\n");
+  log_message(&kernel_debug_logger, LOG_INFO, "syscalls", "Enabling syscall instruction in EFER\n");
   uint64_t efer;
   asm volatile ("rdmsr" : "=A" (efer) : "c" (0xC0000080));
   efer |= 1ULL << 0;  // Set SCE (System Call Enable) bit
   asm volatile ("wrmsr" : : "c" (0xC0000080), "A" (efer));
 
-  log_message(&kernel_debug_logger, LOG_INFO, "  Enabled syscall instruction\n");
+  log_message(&kernel_debug_logger, LOG_INFO, "syscalls", "Enabled syscall instruction\n");
 
   // Prefetch syscall table
-  log_message(&kernel_debug_logger, LOG_INFO, "  Prefetching system call table\n");
+  log_message(&kernel_debug_logger, LOG_INFO, "syscalls", "Prefetching system call table\n");
   __builtin_prefetch(syscall_table, 0, 3);
-  log_message(&kernel_debug_logger, LOG_INFO, "  System call table prefetched\n");
+  log_message(&kernel_debug_logger, LOG_INFO, "syscalls", "System call table prefetched\n");
 }

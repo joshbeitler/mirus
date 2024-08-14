@@ -116,3 +116,6 @@ src/libs/printf/printf/printf.h
 src/libs/printf/printf/printf.c
 
 # End of https://www.toptal.com/developers/gitignore/api/rust
+
+kdebug.json
+target

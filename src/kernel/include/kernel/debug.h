@@ -8,3 +8,4 @@ void debug_logger_initialize();
 
 void debug_test_syscalls();
 void debug_test_exceptions();
+void debug_test_buddy_allocator();
