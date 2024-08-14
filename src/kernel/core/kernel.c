@@ -278,7 +278,7 @@ void _start(void) {
 		"kernel",
 		"Kernel initialization complete\n"
 	);
-	printf_("Mirus, ahoy!\n\n");
+	printf_("Mirus, ahoy!\n");
 
 	pmm_debug_print_state();
 
