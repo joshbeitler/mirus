@@ -1,7 +1,7 @@
 #pragma once
 
-#include <stdint.h>
 #include <stddef.h>
+#include <stdint.h>
 
 /**
  * Default page size
@@ -14,7 +14,10 @@
 #define PAGE_PRESENT (1 << 0)
 #define PAGE_WRITABLE (1 << 1)
 
-/**
- * Number of pages represented by each bitmap word
- */
-#define PAGES_PER_WORD 64
+static inline void *phys_to_virt(uint64_t phys, uint64_t hhdm_offset) {
+	return (void *)(phys + hhdm_offset);
+}
+
+// static inline uintptr_t virt_to_phys(void *virt_addr) {
+// 	return (uintptr_t)virt_addr - hhdm_offset;
+// }

@@ -1,320 +1,316 @@
-#include <stdint.h>
 #include <stddef.h>
+#include <stdint.h>
 
-#include <printf/printf.h>
-#include <libk/string.h>
 #include <jems/jems.h>
+#include <libk/string.h>
+#include <printf/printf.h>
 
-#include <kernel/paging.h>
-#include <kernel/debug.h>
 #include <kernel/buddy.h>
+#include <kernel/debug.h>
+#include <kernel/paging.h>
 
-// Used for printing buddy allocator bitmap in a table
-#define STATUS_WIDTH 72
-#define JEMS_MAX_LEVEL 10 // TODO: we should re-use jems instance
+#define JEMS_MAX_LEVEL 10
 
-void buddy_allocator_set_bit(BuddyBitmapOrder bitmap, int bit) {
-  bitmap[bit / 64] |= (1ULL << (bit % 64));
-}
-
-void buddy_allocator_clear_bit(BuddyBitmapOrder bitmap, int bit) {
-  bitmap[bit / 64] &= ~(1ULL << (bit % 64));
-}
-
-int buddy_allocator_test_bit(BuddyBitmapOrder bitmap, int bit) {
-  return (bitmap[bit / 64] & (1ULL << (bit % 64))) != 0;
-}
-
-int buddy_allocator_find_first_set(BuddyBitmapOrder bitmap, int size) {
-  for (int i = 0; i < size; i++) {
-    if (bitmap[i] != 0) {
-      // Uses builtin ffs function to find the first set bit super quickly
-      return i * 64 + __builtin_ffsll(bitmap[i]) - 1;
-    }
-  }
-
-  return -1;  // No set bit found
-}
-
-int buddy_allocator_find_free_block(BuddyAllocator* allocator, int order) {
-  for (int i = order; i <= MAX_ORDER; i++) {
-    int bit = buddy_allocator_find_first_set(
-      allocator->bitmap[i],
-      1 + (1 << MAX_ORDER) / 64
-    );
-
-    if (bit != -1) {
-      return bit;
-    }
-  }
-
-  return -1;
-}
-
-int buddy_allocator_get_order(size_t size) {
-  int order = 0;
-  size = (size - 1) >> PAGE_SHIFT;
-
-  while (size > 0) {
-    order++;
-    size >>= 1;
-  }
-
-  return order;
-}
-
-void buddy_allocator_init(BuddyAllocator *allocator, uintptr_t start_address) {
-  // Set start address
-  allocator->start_address = start_address;
-
-  // Set bitmap to all free
-  memset(allocator->bitmap, 0xFF, sizeof(allocator->bitmap));
-}
-
-uintptr_t buddy_allocator_alloc(BuddyAllocator *allocator, size_t size) {
-  int order = buddy_allocator_get_order(size);
-  int bit = buddy_allocator_find_free_block(allocator, order);
-
-  if (DEBUG) {
-    log_message(
-      &kernel_debug_logger,
-      LOG_DEBUG,
-      "memory_manager",
-      "Allocating %zu bytes (order %d)\n",
-      size,
-      order
-    );
-  }
-
-  if (bit == -1) {
-    if (DEBUG) {
-      log_message(
-        &kernel_debug_logger,
-        LOG_ERROR,
-        "memory_manager",
-        "No free block found for order: %d\n",
-        order
-      );
-    }
-
-    return (uintptr_t)NULL;
-  }
-
-  if (DEBUG) {
-    log_message(
-      &kernel_debug_logger,
-      LOG_DEBUG,
-      "memory_manager",
-      "Free block found at bit %d for order: %d\n",
-      bit,
-      order
-    );
-  }
-
-  // Split larger blocks if necessary
-  for (int i = MAX_ORDER; i > order; i--) {
-    if (buddy_allocator_test_bit(allocator->bitmap[i], bit >> (i - order))) {
-      buddy_allocator_clear_bit(allocator->bitmap[i], bit >> (i - order));
-      buddy_allocator_set_bit(allocator->bitmap[i-1], (bit >> (i - order - 1)) ^ 1);
-    }
-  }
-
-  // Mark the allocated block as used
-  buddy_allocator_clear_bit(allocator->bitmap[order], bit);
-
-  // Calculate the physical address
-  uintptr_t address = (uintptr_t)bit << (PAGE_SHIFT + order);
-
-  if (DEBUG) {
-    log_message(
-      &kernel_debug_logger,
-      LOG_DEBUG,
-      "memory_manager",
-      "Allocated %zu bytes (requested: %zu bytes) at 0x%016lx\n",
-      (size_t)1 << (PAGE_SHIFT + order),
-      size,
-      address
-    );
-  }
-
-  return address;
-}
-
-void buddy_allocator_free(
-  BuddyAllocator *allocator,
-  uintptr_t address,
-  size_t size
-) {
-  if (DEBUG) {
-    log_message(
-      &kernel_debug_logger,
-      LOG_DEBUG,
-      "memory_manager",
-      "Freeing %zu bytes at address 0x%016lx\n",
-      size,
-      address
-    );
-  }
-
-  // Calculate the order of the block being freed
-  int order = buddy_allocator_get_order(size);
-
-  // Calculate the bit index in the bitmap
-  int bit = (address >> (PAGE_SHIFT + order));
-
-  while (order <= MAX_ORDER) {
-    // Set this bit as free
-    buddy_allocator_set_bit(allocator->bitmap[order], bit);
-
-    if (DEBUG) {
-      log_message(
-        &kernel_debug_logger,
-        LOG_DEBUG,
-        "memory_manager",
-        "Freed block at bit %d for order %d\n",
-        bit,
-        order
-      );
-    }
-
-    // If we're at the highest order or if the buddy is not free, we're done
-    if (
-      order == MAX_ORDER ||
-      !buddy_allocator_test_bit(allocator->bitmap[order], bit ^ 1)
-    ) {
-      return;
-    }
-
-    // If we're here, we can merge with the buddy
-    if (DEBUG) {
-      log_message(
-        &kernel_debug_logger,
-        LOG_DEBUG,
-        "memory_manager",
-        "Merging blocks at bits %d and %d for order %d\n",
-        bit,
-        bit ^ 1,
-        order
-      );
-    }
-
-    // Move to the next order
-    bit >>= 1;
-    order++;
-  }
-
-  // We should never reach here, but if we do, it's an error
-  if (DEBUG) {
-    log_message(
-      &kernel_debug_logger,
-      LOG_ERROR,
-      "memory_manager",
-      "Error in pmm_free - reached end of function unexpectedly\n"
-    );
-  }
-}
-
-
-/** testing the json log emitter */
 static void jems_writer(char ch, uintptr_t arg) {
-  logger_t *logger = (logger_t *)arg;
-  char str[2] = {ch, '\0'};
-  log_stream_data(logger, str, 1);
+	logger_t *logger = (logger_t *)arg;
+	char str[2] = {ch, '\0'};
+	log_stream_data(logger, str, 1);
 }
 
-static void buddy_allocator_bitmap_to_json(BuddyAllocator *allocator) {
-  static jems_level_t jems_levels[JEMS_MAX_LEVEL];
-  static jems_t jems;
-  char buffer[64];
+/**
+ * Utility function to get the proper order for a given size
+ */
+static int find_order(size_t size) {
+	int order = 0;
+	size_t block_size = PAGE_SIZE;
 
-  // Start the log stream
-  log_stream_start(&kernel_debug_logger, LOG_DEBUG, "memory_manager", "Buddy allocator bitmap state");
+	while (block_size < size && order < MAX_ORDER) {
+		block_size *= 2;
+		order++;
+	}
 
-  jems_init(&jems, jems_levels, JEMS_MAX_LEVEL, jems_writer, (uintptr_t)&kernel_debug_logger);
-  jems_object_open(&jems);
-  jems_key_array_open(&jems, "bitmap");
-
-  for (int order = 0; order <= MAX_ORDER; order++) {
-    int blocks_in_order = 1 << (MAX_ORDER - order);
-    size_t block_size = (size_t)PAGE_SIZE << order;
-    size_t total_memory = block_size * blocks_in_order;
-
-    jems_object_open(&jems);
-    jems_key_integer(&jems, "order", order);
-    jems_key_integer(&jems, "blocks_in_order", blocks_in_order);
-    snprintf_(buffer, sizeof(buffer), "%d KiB", block_size / 1024);
-    jems_key_string(&jems, "block_size", buffer);
-    snprintf_(buffer, sizeof(buffer), "%d MiB", total_memory / (1024 * 1024));
-    jems_key_string(&jems, "total_memory", buffer);
-    jems_key_array_open(&jems, "blocks");
-
-    for (int i = 0; i < blocks_in_order; i++) {
-      jems_integer(&jems, !buddy_allocator_test_bit(allocator->bitmap[order], i));
-    }
-
-    jems_array_close(&jems);
-    jems_object_close(&jems);
-  }
-
-  jems_array_close(&jems);
-  jems_object_close(&jems);
-
-  // End the log stream
-  log_stream_end(&kernel_debug_logger);
+	return order;
 }
 
+/**
+ * Utility function to split a block into two smaller blocks
+ */
+static void split_block(BuddyAllocator *allocator, int order) {
+	if (order == 0 || allocator->free_lists[order] == NULL) {
+		return;
+	}
 
-void buddy_allocator_dump_bitmap(BuddyAllocator *allocator) {
-  if (DEBUG) {
-    // log_message(&kernel_debug_logger, LOG_DEBUG, "memory_manager", "Buddy bitmap state\n");
-    buddy_allocator_bitmap_to_json(allocator);
-  }
+	BuddyBlock *block = allocator->free_lists[order];
+	allocator->free_lists[order] = block->next;
 
-  printf_("\nBuddy Allocator Status:\n");
-  printf_("+-------+----------+-------------+------------+--------------------------------------------------------------------------+\n");
-  printf_("| Order | Blocks   | Block Size  | Total Mem  | Status (1=Free)                                                          |\n");
-  printf_("+-------+----------+-------------+------------+--------------------------------------------------------------------------+\n");
+	size_t half_size = PAGE_SIZE * (1 << (order - 1));
+	BuddyBlock *buddy = (BuddyBlock *)((uintptr_t)block + half_size);
 
-  for (int order = 0; order <= MAX_ORDER; order++) {
-    int blocks_in_order = 1 << (MAX_ORDER - order);
-    size_t block_size = (size_t)PAGE_SIZE << order;
-    size_t total_memory = block_size * blocks_in_order;
+	block->size = half_size;
+	buddy->size = half_size;
 
-    printf_(
-      "| %5d | %8d | %7zu KiB | %6zu MiB | ",
-      order,
-      blocks_in_order,
-      block_size / 1024,
-      total_memory / (1024 * 1024)
-    );
+	block->next = buddy;
+	buddy->next = allocator->free_lists[order - 1];
+	allocator->free_lists[order - 1] = block;
+}
 
-    char status[STATUS_WIDTH + 1];  // +1 for null terminator
-    memset(status, ' ', STATUS_WIDTH);
-    status[STATUS_WIDTH] = '\0';
+/**
+ * Utility function to find the buddy of a block
+ */
+static uintptr_t find_buddy(uintptr_t block_addr, size_t block_size) {
+	return block_addr ^ block_size;
+}
 
-    int words_needed = (blocks_in_order + 63) / 64;
-    int bit_count = 0;
+uintptr_t buddy_allocator_allocate(BuddyAllocator *allocator, size_t size) {
+	int order = find_order(size);
+	if (order > MAX_ORDER) {
+		return 0; // Requested size is too large
+	}
 
-    for (int word = 0; word < words_needed && bit_count < STATUS_WIDTH; word++) {
-      uint64_t current_word = allocator->bitmap[order][word];
+	// Find the smallest available block that fits the requested size
+	for (int i = order; i <= MAX_ORDER; i++) {
+		if (allocator->free_lists[i] != NULL) {
+			// Split larger blocks if necessary
+			while (i > order) {
+				split_block(allocator, i);
+				i--;
+			}
 
-      for (int bit = 0; bit < 64 && bit_count < STATUS_WIDTH; bit++) {
-        status[bit_count++] = (current_word & (1ULL << bit)) ? '1' : '0';
+			// Allocate the block
+			BuddyBlock *block = allocator->free_lists[i];
+			allocator->free_lists[i] = block->next;
+			return (uintptr_t)block;
+		}
+	}
 
-        if (bit_count % 8 == 0 && bit_count < STATUS_WIDTH) {
-          status[bit_count++] = ' ';
-        }
-      }
-    }
+	return 0; // No suitable block found
+}
 
-    if (blocks_in_order > STATUS_WIDTH) {
-      status[STATUS_WIDTH - 3] = '.';
-      status[STATUS_WIDTH - 2] = '.';
-      status[STATUS_WIDTH - 1] = '.';
-    }
+void buddy_allocator_free(BuddyAllocator *allocator, uintptr_t address) {
+	BuddyBlock *block = (BuddyBlock *)address;
+	int order = find_order(block->size);
 
-    printf_("%s |\n", status);
-  }
+	while (order < MAX_ORDER) {
+		uintptr_t buddy_addr = find_buddy(address, block->size);
+		BuddyBlock *buddy = (BuddyBlock *)buddy_addr;
 
-  printf_("+-------+----------+-------------+------------+--------------------------------------------------------------------------+\n");
+		// Check if the buddy is free and of the same size
+		int found = 0;
+		BuddyBlock *prev = NULL;
+		BuddyBlock *curr = allocator->free_lists[order];
+
+		while (curr != NULL) {
+			if (curr == buddy) {
+				found = 1;
+				break;
+			}
+
+			prev = curr;
+			curr = curr->next;
+		}
+
+		if (!found) {
+			break; // Buddy not free, can't merge
+		}
+
+		// Remove buddy from free list
+		if (prev == NULL) {
+			allocator->free_lists[order] = curr->next;
+		} else {
+			prev->next = curr->next;
+		}
+
+		// Merge blocks
+		if (buddy_addr < address) {
+			address = buddy_addr;
+		}
+
+		block = (BuddyBlock *)address;
+		block->size *= 2;
+		order++;
+	}
+
+	// Add merged block to appropriate free list
+	block->next = allocator->free_lists[order];
+	allocator->free_lists[order] = block;
+}
+
+void buddy_allocator_init(
+	BuddyAllocator *allocator, uintptr_t start_address, size_t pool_size
+) {
+	if (DEBUG) {
+		log_message(
+			&kernel_debug_logger,
+			LOG_INFO,
+			"memory_manager",
+			"Initializing buddy allocator at 0x%016llx with size %d bytes\n",
+			start_address,
+			pool_size
+		);
+	}
+
+	// Set up allocator struct
+	allocator->start_address = start_address;
+	allocator->pool_size = pool_size;
+
+	if (DEBUG) {
+		log_message(
+			&kernel_debug_logger,
+			LOG_INFO,
+			"memory_manager",
+			"Initializing free lists to null\n"
+		);
+	}
+
+	// Initialize free lists to NULL
+	for (int i = 0; i <= MAX_ORDER; i++) {
+		allocator->free_lists[i] = NULL;
+	}
+
+	size_t remaining_size = pool_size;
+	uintptr_t current_address = start_address;
+
+	if (DEBUG) {
+		log_message(
+			&kernel_debug_logger,
+			LOG_INFO,
+			"memory_manager",
+			"Creating memory blocks\n"
+		);
+	}
+
+	while (remaining_size >= PAGE_SIZE) {
+		int order = MAX_ORDER;
+		size_t block_size = PAGE_SIZE << MAX_ORDER;
+
+		// Find the largest block size that fits in the remaining space
+		while (order >= 0 && block_size > remaining_size) {
+			order--;
+			block_size >>= 1;
+		}
+
+		// Create and add the block to the appropriate free list
+		BuddyBlock *block = (BuddyBlock *)current_address;
+		block->size = block_size;
+		block->next = allocator->free_lists[order];
+		allocator->free_lists[order] = block;
+
+		if (DEBUG) {
+			log_message(
+				&kernel_debug_logger,
+				LOG_INFO,
+				"memory_manager",
+				"Created block of order %d at address 0x%016llx\n",
+				order,
+				(unsigned long long)current_address
+			);
+		}
+
+		current_address += block_size;
+		remaining_size -= block_size;
+	}
+
+	if (DEBUG) {
+		log_message(
+			&kernel_debug_logger,
+			LOG_INFO,
+			"memory_manager",
+			"Buddy allocator initialization complete\n"
+		);
+	}
+}
+
+void buddy_allocator_debug_state(BuddyAllocator *allocator) {
+	static jems_level_t jems_levels[JEMS_MAX_LEVEL];
+	static jems_t jems;
+	char buffer[64];
+
+	// Start the log stream
+	log_stream_start(
+		&kernel_debug_logger,
+		LOG_DEBUG,
+		"memory_manager",
+		"Buddy allocator state"
+	);
+
+	jems_init(
+		&jems,
+		jems_levels,
+		JEMS_MAX_LEVEL,
+		jems_writer,
+		(uintptr_t)&kernel_debug_logger
+	);
+
+	jems_object_open(&jems);
+	jems_key_integer(&jems, "total_memory_size", allocator->pool_size);
+	jems_key_integer(&jems, "total_pages", allocator->pool_size / PAGE_SIZE);
+
+	// Print information for each order
+	jems_key_array_open(&jems, "orders");
+	for (int order = 0; order <= MAX_ORDER; order++) {
+		size_t block_size = PAGE_SIZE * (1 << order);
+		int block_count = 0;
+		size_t total_free_memory = 0;
+
+		// Count blocks and total free memory in this order
+		BuddyBlock *current = allocator->free_lists[order];
+		while (current != NULL) {
+			block_count++;
+			total_free_memory += block_size;
+			current = current->next;
+		}
+
+		jems_object_open(&jems);
+		jems_key_integer(&jems, "order", order);
+		jems_key_integer(&jems, "block_size", block_size);
+		jems_key_integer(&jems, "free_blocks", block_count);
+		jems_key_integer(&jems, "total_free_memory", total_free_memory);
+
+		jems_key_array_open(&jems, "blocks");
+
+		// Print addresses of free blocks
+		current = allocator->free_lists[order];
+		if (current != NULL) {
+			while (current != NULL) {
+				snprintf_(buffer, sizeof(buffer), "%p", (void *)current);
+				jems_string(&jems, buffer);
+				current = current->next;
+			}
+		}
+
+		jems_array_close(&jems);
+		jems_object_close(&jems);
+	}
+
+	jems_array_close(&jems);
+	jems_object_close(&jems);
+
+	// End the log stream
+	log_stream_end(&kernel_debug_logger);
+
+	// Calculate and print total free memory
+	size_t total_free = 0;
+	for (int order = 0; order <= MAX_ORDER; order++) {
+		BuddyBlock *current = allocator->free_lists[order];
+		while (current != NULL) {
+			total_free += PAGE_SIZE * (1 << order);
+			current = current->next;
+		}
+	}
+
+	log_message(
+		&kernel_debug_logger,
+		LOG_DEBUG,
+		"memory_manager",
+		"Total free memory: %zu bytes\n",
+		total_free
+	);
+
+	log_message(
+		&kernel_debug_logger,
+		LOG_DEBUG,
+		"memory_manager",
+		"Total allocated memory: %zu bytes\n",
+		allocator->pool_size - total_free
+	);
 }

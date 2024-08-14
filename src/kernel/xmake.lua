@@ -1,6 +1,8 @@
 target("kernel")
     set_kind("binary")
+    add_values("nasm.flags", "-felf64")
     add_files("core/*.c")
+    add_files("core/*.asm", {force = {nasm = true}})
     add_files("debug/*.c")
     add_files("drivers/*.c")
     add_files("memory/*.c")
