@@ -9,9 +9,10 @@
 #include <hal/serial.h>
 
 #include <kernel/debug.h>
-#include <kernel/paging.h>
-#include <kernel/memory/pmm.h>
 #include <kernel/memory/buddy_allocator.h>
+#include <kernel/memory/pmm.h>
+#include <kernel/paging.h>
+#include <kernel/stack.h>
 
 #define JEMS_MAX_LEVEL 10
 
@@ -34,11 +35,7 @@ static const char *const memmap_type_strings[] = {
 #define MEMMAP_TYPE_COUNT                                                      \
 	(sizeof(memmap_type_strings) / sizeof(memmap_type_strings[0]))
 
-/**
- * Internal helper variables
- */
-static uintptr_t kernel_start, kernel_end;
-static uint64_t total_memory, usable_memory;
+static uint64_t total_memory, usable_memory, kernel_start, kernel_size;
 
 /**
  * Helper function to get a human-readable name for a memory map entry type
@@ -140,9 +137,6 @@ static void log_memory_map_debug(
 	snprintf_(buffer, sizeof(buffer), "0x%016llx", kernel_start);
 	jems_key_string(&jems, "kernel_start", buffer);
 
-	format_memory_size(kernel_size, buffer, sizeof(buffer));
-	jems_key_string(&jems, "kernel_size", buffer);
-
 	jems_key_array_open(&jems, "entries");
 	for (size_t i = 0; i < entry_count; i++) {
 		struct limine_memmap_entry *entry = entries[i];
@@ -165,20 +159,11 @@ void pmm_initialize(
 	uint64_t entry_count,
 	struct limine_memmap_entry **entries,
 	struct limine_kernel_address_response *kernel_address_response,
-	struct limine_kernel_file_response *kernel_file_response,
 	struct limine_hhdm_response *hhdm_response
 ) {
 	total_memory = 0;
 	usable_memory = 0;
 	char size_buffer[64];
-
-	// Calculate kernel_end using the file size from kernel_file_response
-	kernel_start = kernel_address_response->physical_base;
-	uint64_t kernel_size = kernel_file_response->kernel_file->size;
-	kernel_end = kernel_start + kernel_size;
-
-	// Round up kernel_end to the next page boundary
-	kernel_end = (kernel_end + PAGE_SIZE - 1) & ~(PAGE_SIZE - 1);
 
 	if (DEBUG) {
 		log_message(
@@ -192,9 +177,6 @@ void pmm_initialize(
 
 	// Process each entry
 	for (size_t i = 0; i < entry_count; i++) {
-		// entry->base is the base address of this memory region
-		// entry->length is the length of this region
-		// entry->type describes the type of this memory region
 		struct limine_memmap_entry *entry = entries[i];
 
 		total_memory += entry->length;
@@ -202,6 +184,13 @@ void pmm_initialize(
 		// Sum up usable memory
 		if (entry->type == LIMINE_MEMMAP_USABLE) {
 			usable_memory += entry->length;
+		}
+
+		// Get kernel zone start and size, we will put the stack and heap after
+		if (entry->type == LIMINE_MEMMAP_KERNEL_AND_MODULES &&
+			kernel_start == 0) {
+			kernel_start = entry->base;
+			kernel_size = entry->length;
 		}
 	}
 
