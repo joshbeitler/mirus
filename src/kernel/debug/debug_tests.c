@@ -1,7 +1,7 @@
 #include <printf/printf.h>
 
 #include <kernel/debug.h>
-#include <kernel/pmm.h>
+#include <kernel/memory/pmm.h>
 #include <kernel/syscalls.h>
 
 void debug_test_syscalls() {

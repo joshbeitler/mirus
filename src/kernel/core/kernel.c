@@ -19,10 +19,10 @@
 #include <kernel/interrupts.h>
 #include <kernel/paging.h>
 #include <kernel/panic.h>
-#include <kernel/pmm.h>
 #include <kernel/process.h>
 #include <kernel/stack.h>
 #include <kernel/syscalls.h>
+#include <kernel/memory/pmm.h>
 
 #include <drivers/terminal.h>
 

@@ -8,10 +8,10 @@
 
 #include <hal/serial.h>
 
-#include <kernel/buddy.h>
 #include <kernel/debug.h>
 #include <kernel/paging.h>
-#include <kernel/pmm.h>
+#include <kernel/memory/pmm.h>
+#include <kernel/memory/buddy_allocator.h>
 
 #define JEMS_MAX_LEVEL 10
 
