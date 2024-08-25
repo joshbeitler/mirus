@@ -3,10 +3,10 @@
 
 #include <hal/idt.h>
 
+#include <kernel/memory/paging.h>
 #include <kernel/debug.h>
 #include <kernel/interrupts.h>
 #include <kernel/panic.h>
-#include <kernel/paging.h>
 
 // Declare ISR handlers
 extern void isr0();

@@ -6,8 +6,8 @@
 #include <printf/printf.h>
 
 #include <kernel/memory/buddy_allocator.h>
+#include <kernel/memory/paging.h>
 #include <kernel/debug.h>
-#include <kernel/paging.h>
 
 #define JEMS_MAX_LEVEL 10
 

@@ -3,7 +3,7 @@
 #include <stddef.h>
 #include <stdint.h>
 
-#include <kernel/paging.h>
+#include <kernel/memory/paging.h>
 
 /**
  * Returns a reference to the kernel stack pointer.

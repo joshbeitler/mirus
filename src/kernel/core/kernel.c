@@ -14,11 +14,11 @@
 #include <hal/idt.h>
 #include <hal/serial.h>
 
+#include <kernel/memory/pmm.h>
+#include <kernel/memory/paging.h>
 #include <kernel/bootloader.h>
 #include <kernel/debug.h>
 #include <kernel/interrupts.h>
-#include <kernel/memory/pmm.h>
-#include <kernel/paging.h>
 #include <kernel/panic.h>
 #include <kernel/process.h>
 #include <kernel/stack.h>

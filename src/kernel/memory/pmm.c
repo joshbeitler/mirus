@@ -11,7 +11,7 @@
 #include <kernel/debug.h>
 #include <kernel/memory/buddy_allocator.h>
 #include <kernel/memory/pmm.h>
-#include <kernel/paging.h>
+#include <kernel/memory/paging.h>
 #include <kernel/stack.h>
 
 #define JEMS_MAX_LEVEL 10
