@@ -1,11 +1,26 @@
 #pragma once
 
+#include "buddy_allocator.h"
 #include <stddef.h>
 #include <stdint.h>
 
 #include <limine/limine.h>
 
 #include <kernel/memory/buddy_allocator.h>
+
+typedef struct BuddyAllocatorNode {
+	BuddyAllocator allocator;
+	struct BuddyAllocatorNode *next;
+} BuddyAllocatorNode;
+
+typedef struct MemoryZone {
+	uintptr_t start_address;
+	size_t size;
+	BuddyAllocatorNode *allocators;
+	struct MemoryZone *next;
+} MemoryZone;
+
+static MemoryZone *memory_zones;
 
 /**
  * Read and interpret the memory map from the bootloader

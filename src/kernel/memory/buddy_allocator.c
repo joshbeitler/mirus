@@ -135,7 +135,7 @@ void buddy_allocator_free(BuddyAllocator *allocator, uintptr_t address) {
 	allocator->free_lists[order] = block;
 }
 
-void buddy_allocator_init(
+void buddy_allocator_initialize(
 	BuddyAllocator *allocator, uintptr_t start_address, size_t pool_size
 ) {
 	if (DEBUG) {
@@ -156,7 +156,7 @@ void buddy_allocator_init(
 	if (DEBUG) {
 		log_message(
 			&kernel_debug_logger,
-			LOG_INFO,
+			LOG_DEBUG,
 			"memory_manager",
 			"Initializing free lists to null\n"
 		);
@@ -173,7 +173,7 @@ void buddy_allocator_init(
 	if (DEBUG) {
 		log_message(
 			&kernel_debug_logger,
-			LOG_INFO,
+			LOG_DEBUG,
 			"memory_manager",
 			"Creating memory blocks\n"
 		);
@@ -198,7 +198,7 @@ void buddy_allocator_init(
 		if (DEBUG) {
 			log_message(
 				&kernel_debug_logger,
-				LOG_INFO,
+				LOG_DEBUG,
 				"memory_manager",
 				"Created block of order %d at address 0x%016llx\n",
 				order,

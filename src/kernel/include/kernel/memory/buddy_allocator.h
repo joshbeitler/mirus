@@ -67,7 +67,7 @@ void buddy_allocator_free(BuddyAllocator *allocator, uintptr_t address);
  *        pool.
  * @param pool_size The size of the memory pool in bytes.
  */
-void buddy_allocator_init(
+void buddy_allocator_initialize(
 	BuddyAllocator *allocator, uintptr_t start_address, size_t pool_size
 );
 
