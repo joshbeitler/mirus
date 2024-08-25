@@ -8,11 +8,22 @@
 
 #include <kernel/memory/buddy_allocator.h>
 
+/**
+ * Represents a buddy allocator in an intrusive linked list. This is used to
+ * allow multuiple buddy allocators to manage a single memory zone without
+ * needing free/alloc.
+ */
 typedef struct BuddyAllocatorNode {
 	BuddyAllocator allocator;
 	struct BuddyAllocatorNode *next;
 } BuddyAllocatorNode;
 
+/**
+ * Represents a memory zone. A memory zone is a contiguous block of physical
+ * memory. Each memory zone has its a list of buddy allocators to manage, stored
+ * as an intrusive linked list. Zones themeselves are also stored as a intrusive
+ * linked list.
+ */
 typedef struct MemoryZone {
 	uintptr_t start_address;
 	size_t size;
@@ -20,6 +31,9 @@ typedef struct MemoryZone {
 	struct MemoryZone *next;
 } MemoryZone;
 
+/**
+ * Intrusive linked list of memory zones.
+ */
 static MemoryZone *memory_zones;
 
 /**

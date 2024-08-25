@@ -5,9 +5,9 @@
 #include <libk/string.h>
 #include <printf/printf.h>
 
+#include <kernel/debug.h>
 #include <kernel/memory/buddy_allocator.h>
 #include <kernel/memory/paging.h>
-#include <kernel/debug.h>
 
 #define JEMS_MAX_LEVEL 10
 

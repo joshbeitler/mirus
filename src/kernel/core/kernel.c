@@ -266,6 +266,7 @@ void _start(void) {
 	printf_("Mirus, ahoy!\n");
 
 	// pmm_debug_print_state();
+	// debug_test_buddy_allocator();
 
 	// If we got here, just chill. Halt the CPU.
 	hcf();
