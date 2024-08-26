@@ -14,8 +14,6 @@
 #include <kernel/memory/pmm.h>
 #include <kernel/stack.h>
 
-#define JEMS_MAX_LEVEL 10
-
 /**
  * Intrusive linked list of memory zones.
  */
@@ -48,11 +46,7 @@ static uint64_t total_memory, usable_memory, kernel_start, kernel_size;
  * @return Human-readable name for the type
  */
 static const char *get_memmap_type_string(uint64_t type) {
-	if (type < MEMMAP_TYPE_COUNT) {
-		return memmap_type_strings[type];
-	}
-
-	return "Unknown";
+	return (type < MEMMAP_TYPE_COUNT) ? memmap_type_strings[type] : "Unknown";
 }
 
 /**
@@ -98,13 +92,6 @@ static char *format_memory_size(
 	return buffer;
 }
 
-/** testing the json log emitter */
-static void jems_writer(char ch, uintptr_t arg) {
-	logger_t *logger = (logger_t *)arg;
-	char str[2] = {ch, '\0'};
-	log_stream_data(logger, str, 1);
-}
-
 static void log_memory_map_debug(
 	uint64_t entry_count,
 	struct limine_memmap_entry **entries,
@@ -117,7 +104,6 @@ static void log_memory_map_debug(
 	static jems_t jems;
 	char buffer[64];
 
-	// Start the log stream
 	log_stream_start(
 		&kernel_debug_logger, LOG_DEBUG, "memory_manager", "Memory Map"
 	);
@@ -153,10 +139,8 @@ static void log_memory_map_debug(
 	jems_array_close(&jems);
 	jems_object_close(&jems);
 
-	// End the log stream
 	log_stream_end(&kernel_debug_logger);
 }
-/** end testing the json log emitter */
 
 void pmm_initialize(
 	uint64_t entry_count,

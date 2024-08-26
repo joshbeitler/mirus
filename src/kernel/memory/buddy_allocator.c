@@ -9,14 +9,6 @@
 #include <kernel/memory/buddy_allocator.h>
 #include <kernel/memory/paging.h>
 
-#define JEMS_MAX_LEVEL 10
-
-static void jems_writer(char ch, uintptr_t arg) {
-	logger_t *logger = (logger_t *)arg;
-	char str[2] = {ch, '\0'};
-	log_stream_data(logger, str, 1);
-}
-
 /**
  * Utility function to get the proper order for a given size
  */
