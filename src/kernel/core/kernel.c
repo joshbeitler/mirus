@@ -60,7 +60,6 @@ void _start(void) {
 		"Bootloader version compatible\n"
 	);
 
-	// Print initial stack location
 	uintptr_t kernel_stack_phys =
 		virt_to_phys((void *)kernel_stack_top, hhdm_request.response->offset);
 
