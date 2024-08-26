@@ -3,11 +3,10 @@
 #include <stddef.h>
 #include <stdint.h>
 
+#include <kernel/memory/paging.h>
+
 /**
- * Returns a reference to the kernel stack pointer that was set up by
- * the boot loader.
- *
- * TODO: Will be eventually replaced when we set up our own stack.
+ * Returns a reference to the kernel stack pointer.
  */
 static inline uintptr_t get_kernel_stack_ptr() {
 	uintptr_t stack_ptr;

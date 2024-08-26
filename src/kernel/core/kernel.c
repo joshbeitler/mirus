@@ -14,12 +14,12 @@
 #include <hal/idt.h>
 #include <hal/serial.h>
 
+#include <kernel/memory/pmm.h>
+#include <kernel/memory/paging.h>
 #include <kernel/bootloader.h>
 #include <kernel/debug.h>
 #include <kernel/interrupts.h>
-#include <kernel/paging.h>
 #include <kernel/panic.h>
-#include <kernel/pmm.h>
 #include <kernel/process.h>
 #include <kernel/stack.h>
 #include <kernel/syscalls.h>
@@ -30,6 +30,8 @@
  * Kernel entry point
  */
 void _start(void) {
+    uintptr_t kernel_stack_top = get_kernel_stack_ptr();
+
 	serial_initialize();
 	debug_logger_initialize();
 	hal_logger_initialize();
@@ -58,14 +60,15 @@ void _start(void) {
 		"Bootloader version compatible\n"
 	);
 
-	// Find kernel stack from bootloader
-	uintptr_t kernel_stack_top = get_kernel_stack_ptr();
+	uintptr_t kernel_stack_phys =
+		virt_to_phys((void *)kernel_stack_top, hhdm_request.response->offset);
+
 	log_message(
 		&kernel_debug_logger,
 		LOG_INFO,
 		"kernel",
-		"Successfully found kernel stack at: %p\n",
-		(void *)kernel_stack_top
+		"Successfully found initial kernel stack at: %p\n",
+		(void *)kernel_stack_phys
 	);
 
 	// Ensure we got a framebuffer and fetch the first available one.
@@ -122,24 +125,6 @@ void _start(void) {
 		LOG_INFO,
 		"kernel",
 		"Successfully found kernel location\n"
-	);
-
-	// Ensure we got the kernel file
-	if (kernel_file_request.response == NULL ||
-		kernel_file_request.response->kernel_file == NULL) {
-		log_message(
-			&kernel_debug_logger,
-			LOG_FATAL,
-			"kernel",
-			"Couldn't get kernel file\n"
-		);
-		hcf();
-	}
-	log_message(
-		&kernel_debug_logger,
-		LOG_INFO,
-		"kernel",
-		"Successfully found kernel file\n"
 	);
 
 	// Ensure we got higher half direct memory offset
@@ -243,7 +228,6 @@ void _start(void) {
 		memory_map_request.response->entry_count,
 		memory_map_request.response->entries,
 		kernel_address_request.response,
-		kernel_file_request.response,
 		hhdm_request.response
 	);
 	// TODO: Initialize paging
@@ -280,7 +264,8 @@ void _start(void) {
 	);
 	printf_("Mirus, ahoy!\n");
 
-	pmm_debug_print_state();
+	// pmm_debug_print_state();
+	// debug_test_buddy_allocator();
 
 	// If we got here, just chill. Halt the CPU.
 	hcf();

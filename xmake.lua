@@ -131,7 +131,7 @@ task("run-qemu-uefi")
 
         -- Construct the QEMU command
         local qemu_cmd = string.format(
-            "qemu-system-x86_64 -chardev stdio,id=char0,logfile=kdebug.json -M q35 -m 2G -bios %s -cdrom %s -boot d -serial chardev:char0 -d int,cpu_reset,in_asm -D qemu.log -no-reboot -no-shutdown",
+            "qemu-system-x86_64 -chardev stdio,id=char0,logfile=kdebug.json -M q35 -m 8G -bios %s -cdrom %s -boot d -serial chardev:char0 -d int,cpu_reset,in_asm -D qemu.log -no-reboot -no-shutdown",
             ovmf_path,
             iso_file
          )

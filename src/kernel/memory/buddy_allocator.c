@@ -5,17 +5,9 @@
 #include <libk/string.h>
 #include <printf/printf.h>
 
-#include <kernel/buddy.h>
 #include <kernel/debug.h>
-#include <kernel/paging.h>
-
-#define JEMS_MAX_LEVEL 10
-
-static void jems_writer(char ch, uintptr_t arg) {
-	logger_t *logger = (logger_t *)arg;
-	char str[2] = {ch, '\0'};
-	log_stream_data(logger, str, 1);
-}
+#include <kernel/memory/buddy_allocator.h>
+#include <kernel/memory/paging.h>
 
 /**
  * Utility function to get the proper order for a given size
@@ -135,7 +127,7 @@ void buddy_allocator_free(BuddyAllocator *allocator, uintptr_t address) {
 	allocator->free_lists[order] = block;
 }
 
-void buddy_allocator_init(
+void buddy_allocator_initialize(
 	BuddyAllocator *allocator, uintptr_t start_address, size_t pool_size
 ) {
 	if (DEBUG) {
@@ -156,7 +148,7 @@ void buddy_allocator_init(
 	if (DEBUG) {
 		log_message(
 			&kernel_debug_logger,
-			LOG_INFO,
+			LOG_DEBUG,
 			"memory_manager",
 			"Initializing free lists to null\n"
 		);
@@ -173,7 +165,7 @@ void buddy_allocator_init(
 	if (DEBUG) {
 		log_message(
 			&kernel_debug_logger,
-			LOG_INFO,
+			LOG_DEBUG,
 			"memory_manager",
 			"Creating memory blocks\n"
 		);
@@ -198,7 +190,7 @@ void buddy_allocator_init(
 		if (DEBUG) {
 			log_message(
 				&kernel_debug_logger,
-				LOG_INFO,
+				LOG_DEBUG,
 				"memory_manager",
 				"Created block of order %d at address 0x%016llx\n",
 				order,
