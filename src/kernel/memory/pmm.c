@@ -16,7 +16,10 @@
 
 #define JEMS_MAX_LEVEL 10
 
-// static BuddyAllocator buddy_allocator;
+/**
+ * Intrusive linked list of memory zones.
+ */
+static MemoryZone *memory_zones;
 
 /**
  * Human-readable names for memory map entry types

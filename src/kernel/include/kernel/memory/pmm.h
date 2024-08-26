@@ -32,11 +32,6 @@ typedef struct MemoryZone {
 } MemoryZone;
 
 /**
- * Intrusive linked list of memory zones.
- */
-static MemoryZone *memory_zones;
-
-/**
  * Read and interpret the memory map from the bootloader
  *
  * @param entry_count Number of memory map entries
