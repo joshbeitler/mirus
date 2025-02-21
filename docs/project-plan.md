@@ -7,15 +7,15 @@ management and a few other things before we can do that. Once that is done, we
 can start on implementing the managed runtime, which is where we will jump to.
 
 - [-] memory management
-  - [-] physical memory manager
-    - [-] buddy allocator
+  - [x] physical memory manager
+    - [x] buddy allocator
       - [x] Support detailed logging of buddy allocator frame to debug log (full bitmap dump
-      - [ ] Support entire system memory by using a series of buddy allocators
-    - [ ] Preserve special memory areas (ACPI, kernel, framebuffer, etc) in buddy allocator init
-      - [ ] PMM should use all available memory
+      - [x] Support entire system memory by using a series of buddy allocators
+    - [x] Preserve special memory areas (ACPI, kernel, framebuffer, etc) in buddy allocator init
+      - [x] PMM should use all available memory
     - [ ] Implement a slab allocator for small objects
   - [ ] kmalloc / kfree
-  - [ ] virtual memory manager/paging
+  - [ ] virtual memory manager
 - [ ] mirus runtime
   - [ ] wasm VM
   - [-] syscalls

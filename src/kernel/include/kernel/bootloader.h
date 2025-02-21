@@ -59,14 +59,6 @@ __attribute__((used, section(".requests"))
 	{.id = LIMINE_KERNEL_ADDRESS_REQUEST, .revision = 0};
 
 /**
- * Get kernel file from Limine
- */
-__attribute__((used, section(".requests"))
-) static volatile struct limine_kernel_file_request kernel_file_request = {
-	.id = LIMINE_KERNEL_FILE_REQUEST, .revision = 0
-};
-
-/**
  * Get higher-half direct memory start from Limine
  */
 __attribute__((used, section(".requests"))
